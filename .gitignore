@@ -26,6 +26,6 @@ GRTAGS
 GPATH
 GTAGS
 docs/book
-miniob/
+miniob
 *.log.*
 #*#
