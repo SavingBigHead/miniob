@@ -45,6 +45,8 @@ namespace common {
  *  \sa http://scienceworld.wolfram.com/astronomy/Weekday.html
  */
 
+bool check_date(int y,int m,int d);
+
 struct DateTime
 {
   int m_date;
