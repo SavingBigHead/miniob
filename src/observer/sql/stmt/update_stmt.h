@@ -28,7 +28,7 @@ class UpdateStmt : public Stmt
 {
 public:
   UpdateStmt() = default;
-  UpdateStmt(Table *table, std::String filter_nsme, Value *values, FilterStmt *filter_stmt);
+  UpdateStmt(Table *table, std::string fielter_name, Value values, FilterStmt *filter_stmt);
   ~UpdateStmt() override;
   StmtType type() const override { return StmtType::UPDATE; }
 
@@ -37,10 +37,11 @@ public:
 
 public:
   Table *table() const { return table_; }
-  Value *values() const { return values_; }
+  Value  values() const { return values_; }
 
 private:
-  Table      *table_       = nullptr;
-  Value      *values_      = nullptr;
-  FilterStmt *filter_stmt_ = nullptr;
+  Table      *table_        = nullptr;
+  std::string fielter_name_ = "";
+  Value       values_       = {};
+  FilterStmt *filter_stmt_  = nullptr;
 };
