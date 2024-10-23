@@ -1,3 +1,4 @@
+  void remove_file(const char *file_name); //new
 /* Copyright (c) 2021 Xie Meiyi(xiemeiyi@hust.edu.cn) and OceanBase and/or its affiliates. All rights reserved.
 miniob is licensed under Mulan PSL v2.
 You can use this software according to the terms and conditions of the Mulan PSL v2.
@@ -13,7 +14,7 @@ See the Mulan PSL v2 for more details. */
 //
 #include <errno.h>
 #include <string.h>
-
+#include "disk_buffer_pool.h"
 #include "common/io/io.h"
 #include "common/lang/mutex.h"
 #include "common/lang/algorithm.h"
@@ -309,6 +310,14 @@ RC DiskBufferPool::close_file()
   return RC::SUCCESS;
 }
 
+
+//new
+void DiskBufferPool::remove_file(){
+  bp_manager_.remove_file(file_name_.c_str());
+
+}
+
+
 RC DiskBufferPool::get_this_page(PageNum page_num, Frame **frame)
 {
   RC rc  = RC::SUCCESS;
@@ -429,6 +438,8 @@ RC DiskBufferPool::allocate_page(Frame **frame)
   *frame = allocated_frame;
   return RC::SUCCESS;
 }
+
+
 
 RC DiskBufferPool::dispose_page(PageNum page_num)
 {
@@ -885,6 +896,15 @@ RC BufferPoolManager::close_file(const char *_file_name)
   delete bp;
   return RC::SUCCESS;
 }
+
+//new
+  RC BufferPoolManager::remove_file(const char *file_name){
+    close_file (file_name);
+    ::remove(file_name);
+
+    return RC::SUCCESS;
+  }
+
 
 RC BufferPoolManager::flush_page(Frame &frame)
 {
