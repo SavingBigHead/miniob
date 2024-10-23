@@ -21,6 +21,7 @@ See the Mulan PSL v2 for more details. */
 #include "common/lang/iomanip.h"
 #include "common/lang/sstream.h"
 #include "common/lang/string.h"
+#include <mutex>
 namespace common {
 
 DateTime::DateTime(string &xml_str)
@@ -374,7 +375,7 @@ string Now::unique()
 #endif
   gettimeofday(&tv, NULL);
   temp = (((uint64_t)tv.tv_sec) << 20) + tv.tv_usec;
-  pthread_mutex_lock(&mutex);
+ pthread_mutex_lock(&mutex);
   if (temp > last_unique) {
     // record last timeStamp
     last_unique = temp;
@@ -439,6 +440,16 @@ bool DateTime::is_valid_xml_datetime(const string &str)
     return false;
 
   return true;
+}
+
+
+bool check_date(int y, int m, int d)
+{
+    static int mon[] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    bool leap = (y % 400 == 0 || (y % 100 != 0 && y % 4 == 0)); // 闰年判断
+    return y > 0 && y <= 9999
+        && m > 0 && m <= 12
+        && d > 0 && d <= (mon[m] + (m == 2 && leap ? 1 : 0)); // 闰年 2 月处理
 }
 
 }  // namespace common
