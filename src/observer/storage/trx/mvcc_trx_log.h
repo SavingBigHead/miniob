@@ -123,6 +123,12 @@ public:
   RC delete_record(int32_t trx_id, Table *table, const RID &rid);
 
   /**
+   * @brief 记录更新一条记录的日志
+   * 
+   */
+  RC update_record(int32_t trx_id, Table *table, const RID &rid);
+
+  /**
    * @brief 记录提交事务的日志
    * @details 会等待日志落地
    */

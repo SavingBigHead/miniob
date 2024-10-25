@@ -36,6 +36,15 @@ RC VacuousTrx::insert_record(Table *table, Record &record) { return table->inser
 
 RC VacuousTrx::delete_record(Table *table, Record &record) { return table->delete_record(record); }
 
+RC VacuousTrx::update_record(Table *table, const std::string &field_name, const Value &new_value, Record &record){ 
+  const FieldMeta *field_meta = table->table_meta().field(field_name.c_str());
+  char *new_data = (char *)malloc(table->table_meta().record_size());
+  memcpy(new_data, record.data(), table->table_meta().record_size());
+  memcpy(new_data + field_meta->offset(), new_value.data(), field_meta->len());
+
+  return table->update_record(record.rid(), new_data);
+ }
+
 RC VacuousTrx::visit_record(Table *table, Record &record, ReadWriteMode) { return RC::SUCCESS; }
 
 RC VacuousTrx::start_if_need() { return RC::SUCCESS; }

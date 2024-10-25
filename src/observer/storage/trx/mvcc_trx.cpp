@@ -31,10 +31,11 @@ MvccTrxKit::~MvccTrxKit()
 RC MvccTrxKit::init()
 {
   // 事务使用一些特殊的字段，放到每行记录中，表示行记录的可见性。
-  fields_ = vector<FieldMeta>{
-      // field_id in trx fields is invisible.
-      FieldMeta("__trx_xid_begin", AttrType::INTS, 0 /*attr_offset*/, 4 /*attr_len*/, false /*visible*/, -1/*field_id*/),
-      FieldMeta("__trx_xid_end", AttrType::INTS, 0 /*attr_offset*/, 4 /*attr_len*/, false /*visible*/, -2/*field_id*/)};
+  fields_ = vector<FieldMeta>{// field_id in trx fields is invisible.
+      FieldMeta(
+          "__trx_xid_begin", AttrType::INTS, 0 /*attr_offset*/, 4 /*attr_len*/, false /*visible*/, -1 /*field_id*/),
+      FieldMeta(
+          "__trx_xid_end", AttrType::INTS, 0 /*attr_offset*/, 4 /*attr_len*/, false /*visible*/, -2 /*field_id*/)};
 
   LOG_INFO("init mvcc trx kit done.");
   return RC::SUCCESS;
@@ -113,11 +114,10 @@ LogReplayer *MvccTrxKit::create_log_replayer(Db &db, LogHandler &log_handler)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-MvccTrx::MvccTrx(MvccTrxKit &kit, LogHandler &log_handler) : trx_kit_(kit), log_handler_(log_handler)
-{}
+MvccTrx::MvccTrx(MvccTrxKit &kit, LogHandler &log_handler) : trx_kit_(kit), log_handler_(log_handler) {}
 
-MvccTrx::MvccTrx(MvccTrxKit &kit, LogHandler &log_handler, int32_t trx_id) 
-  : trx_kit_(kit), log_handler_(log_handler), trx_id_(trx_id)
+MvccTrx::MvccTrx(MvccTrxKit &kit, LogHandler &log_handler, int32_t trx_id)
+    : trx_kit_(kit), log_handler_(log_handler), trx_id_(trx_id)
 {
   started_    = true;
   recovering_ = true;
@@ -185,6 +185,46 @@ RC MvccTrx::delete_record(Table *table, Record &record)
 
   return RC::SUCCESS;
 }
+
+RC MvccTrx::update_record(Table *table, const std::string &field_name, const Value &new_value, Record &record)
+{
+
+  Field begin_field;
+  Field end_field;
+  trx_fields(table, begin_field, end_field);
+
+  RC update_result = RC::SUCCESS;
+
+  // 获取字段元信息
+  const FieldMeta *field_meta = table->table_meta().field(field_name.c_str());
+  if (nullptr == field_meta) {
+    LOG_ERROR("Field not found: %s", field_name.c_str());
+    return RC::SCHEMA_FIELD_NOT_EXIST;
+  }
+
+  // 构造新的记录数据
+  char *new_data = (char *)malloc(table->table_meta().record_size());
+  memcpy(new_data, record.data(), table->table_meta().record_size());
+  memcpy(new_data + field_meta->offset(), new_value.data(), field_meta->len());
+
+  // 调用 Table::update_record 更新记录
+  update_result = table->update_record(record.rid(), new_data);
+  if (update_result != RC::SUCCESS) {
+    LOG_ERROR("Failed to update record. rc=%s", strrc(update_result));
+  }
+
+  free(new_data);
+
+  update_result = log_handler_.update_record(trx_id_, table, record.rid());
+  ASSERT(update_result == RC::SUCCESS, "failed to append update record log. trx id=%d, table id=%d, rid=%s, field name=%s, new value=%s, record len=%d, rc=%s",
+         trx_id_, table->table_id(), record.rid().to_string().c_str(), field_name.c_str(), new_value.to_string().c_str(), record.len(), strrc(update_result)); 
+
+  operations_.push_back(Operation(Operation::Type::UPDATE, table, record.rid()));
+
+  return update_result;
+}
+
+
 
 RC MvccTrx::visit_record(Table *table, Record &record, ReadWriteMode mode)
 {
@@ -445,9 +485,9 @@ RC find_table(Db *db, const LogEntry &log_entry, Table *&table)
 
 RC MvccTrx::redo(Db *db, const LogEntry &log_entry)
 {
-  auto *trx_log_header = reinterpret_cast<const MvccTrxLogHeader *>(log_entry.data());
-  Table *table = nullptr;
-  RC     rc    = find_table(db, log_entry, table);
+  auto  *trx_log_header = reinterpret_cast<const MvccTrxLogHeader *>(log_entry.data());
+  Table *table          = nullptr;
+  RC     rc             = find_table(db, log_entry, table);
   if (OB_FAIL(rc)) {
     return rc;
   }

@@ -272,7 +272,7 @@ RC Table::make_record(int value_num, const Value *values, Record &record)
 
   for (int i = 0; i < value_num && OB_SUCC(rc); i++) {
     const FieldMeta *field = table_meta_.field(i + normal_field_start_index);
-    const Value &    value = values[i];
+    const Value     &value = values[i];
     if (field->type() != value.attr_type()) {
       Value real_value;
       rc = Value::cast_to(value, field->type(), real_value);
@@ -475,6 +475,57 @@ RC Table::delete_record(const Record &record)
   rc = record_handler_->delete_record(&record.rid());
   return rc;
 }
+
+RC Table::update_record(const RID &rid, const char *new_data)
+{
+  RC rc = RC::SUCCESS;
+
+  // 获取旧记录数据
+  Record old_record;
+  rc = get_record(rid, old_record);
+  if (rc != RC::SUCCESS) {
+    LOG_ERROR("Failed to get old record. rid=%s, rc=%s", rid.to_string().c_str(), strrc(rc));
+    return rc;
+  }
+
+  // 更新记录数据
+  rc = record_handler_->update_record(&rid, new_data, table_meta_.record_size());
+  if (rc != RC::SUCCESS) {
+    LOG_ERROR("Failed to update record in record handler. rc=%s", strrc(rc));
+    return rc;
+  }
+
+  // 更新索引
+  rc = update_entry_of_indexes(old_record.data(), new_data, rid);
+  if (rc != RC::SUCCESS) {
+    LOG_ERROR("Failed to update indexes. rc=%s", strrc(rc));
+    return rc;
+  }
+
+  return rc;
+}
+
+RC Table::update_entry_of_indexes(const char *old_record, const char *new_record, const RID &rid)
+{
+  RC rc = RC::SUCCESS;
+
+  // 先删除旧的索引项
+  rc = delete_entry_of_indexes(old_record, rid, false);
+  if (rc != RC::SUCCESS) {
+    LOG_ERROR("Failed to delete old index entries. rc=%s", strrc(rc));
+    return rc;
+  }
+
+  // 然后插入新的索引项
+  rc = insert_entry_of_indexes(new_record, rid);
+  if (rc != RC::SUCCESS) {
+    LOG_ERROR("Failed to insert new index entries. rc=%s", strrc(rc));
+    return rc;
+  }
+
+  return rc;
+}
+
 
 RC Table::insert_entry_of_indexes(const char *record, const RID &rid)
 {
