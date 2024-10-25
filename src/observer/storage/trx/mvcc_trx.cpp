@@ -232,12 +232,6 @@ RC MvccTrx::update_record(Table *table, const std::string &field_name, const Val
             memset(new_data + field_meta->offset(), 0, field_meta->len());
             // 复制新值
             memcpy(new_data + field_meta->offset(), new_value.data(), new_value.length());
-            // 用空格填充剩余部分
-            if (new_value.length() < field_meta->len()) {
-                memset(new_data + field_meta->offset() + new_value.length(), 
-                       ' ', // 空格字符
-                       field_meta->len() - new_value.length());
-            }
             break;
         }
         case AttrType::INTS: 
