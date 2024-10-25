@@ -195,25 +195,72 @@ RC MvccTrx::update_record(Table *table, const std::string &field_name, const Val
 
   RC update_result = RC::SUCCESS;
 
-  // 获取字段元信息
-  const FieldMeta *field_meta = table->table_meta().field(field_name.c_str());
-  if (nullptr == field_meta) {
-    LOG_ERROR("Field not found: %s", field_name.c_str());
-    return RC::SCHEMA_FIELD_NOT_EXIST;
-  }
+    // 验证输入参数
+    if (nullptr == table || nullptr == record.data()) {
+        LOG_ERROR("输入参数无效: table 或 record data 为空");
+        return RC::INVALID_ARGUMENT;
+    }
 
-  // 构造新的记录数据
-  char *new_data = (char *)malloc(table->table_meta().record_size());
-  memcpy(new_data, record.data(), table->table_meta().record_size());
-  memcpy(new_data + field_meta->offset(), new_value.data(), field_meta->len());
+    // 获取字段元数据
+    const FieldMeta *field_meta = table->table_meta().field(field_name.c_str());
+    if (nullptr == field_meta) {
+        LOG_ERROR("未找到字段: %s", field_name.c_str());
+        return RC::SCHEMA_FIELD_NOT_EXIST;
+    }
 
-  // 调用 Table::update_record 更新记录
-  update_result = table->update_record(record.rid(), new_data);
-  if (update_result != RC::SUCCESS) {
-    LOG_ERROR("Failed to update record. rc=%s", strrc(update_result));
-  }
+    // 验证字段长度与新值的长度
+    if (new_value.length() > field_meta->len()) {
+        LOG_ERROR("新值长度 (%d) 超过字段长度限制 (%d)", new_value.length(), field_meta->len());
+        return RC::INVALID_ARGUMENT;
+    }
 
-  free(new_data);
+    // 为新记录分配内存
+    size_t record_size = table->table_meta().record_size();
+    char *new_data = static_cast<char *>(malloc(record_size));
+    if (nullptr == new_data) {
+        LOG_ERROR("为新记录数据分配内存失败");
+        return RC::NOMEM;
+    }
+
+    // 复制原始记录数据
+    memcpy(new_data, record.data(), record_size);
+
+    // 根据字段类型处理更新
+    switch (field_meta->type()) {
+        case AttrType::CHARS: { // 定长字符串类型
+            // 先清空字段区域
+            memset(new_data + field_meta->offset(), 0, field_meta->len());
+            // 复制新值
+            memcpy(new_data + field_meta->offset(), new_value.data(), new_value.length());
+            // 用空格填充剩余部分
+            if (new_value.length() < field_meta->len()) {
+                memset(new_data + field_meta->offset() + new_value.length(), 
+                       ' ', // 空格字符
+                       field_meta->len() - new_value.length());
+            }
+            break;
+        }
+        case AttrType::INTS: 
+        case AttrType::FLOATS: {   // 定长数值类型
+            // 直接覆盖，确保完整的类型长度都被更新
+            memcpy(new_data + field_meta->offset(), new_value.data(), field_meta->len());
+            break;
+        }
+        default: {
+            LOG_ERROR("不支持的字段类型: %d", field_meta->type());
+            free(new_data);
+            return RC::INTERNAL;
+        }
+    }
+
+    // 更新记录
+    update_result = table->update_record(record.rid(), new_data);
+    if (update_result != RC::SUCCESS) {
+        LOG_ERROR("更新记录失败. rc=%s", strrc(update_result));
+    }
+
+    // 清理内存
+    free(new_data);
 
   update_result = log_handler_.update_record(trx_id_, table, record.rid());
   ASSERT(update_result == RC::SUCCESS, "failed to append update record log. trx id=%d, table id=%d, rid=%s, field name=%s, new value=%s, record len=%d, rc=%s",
