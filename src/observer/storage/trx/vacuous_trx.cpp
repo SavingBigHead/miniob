@@ -37,13 +37,43 @@ RC VacuousTrx::insert_record(Table *table, Record &record) { return table->inser
 RC VacuousTrx::delete_record(Table *table, Record &record) { return table->delete_record(record); }
 
 RC VacuousTrx::update_record(Table *table, const std::string &field_name, const Value &new_value, Record &record){ 
+  RC update_result = RC::SUCCESS;
+
+  // 获取字段元信息
   const FieldMeta *field_meta = table->table_meta().field(field_name.c_str());
+  if (nullptr == field_meta) {
+    LOG_ERROR("Field not found: %s", field_name.c_str());
+    return RC::SCHEMA_FIELD_NOT_EXIST;
+  }
+
+  // 构造新的记录数据
   char *new_data = (char *)malloc(table->table_meta().record_size());
   memcpy(new_data, record.data(), table->table_meta().record_size());
-  memcpy(new_data + field_meta->offset(), new_value.data(), field_meta->len());
 
-  return table->update_record(record.rid(), new_data);
- }
+  // 确保 new_value 的大小符合 field_meta->len()
+  size_t value_len = field_meta->len();
+  char *adjusted_value_data = (char *)malloc(value_len);
+  memset(adjusted_value_data, 0, value_len);  // 初始化为0，避免垃圾值
+
+  // 将 new_value 数据复制到调整后的缓冲区
+  memcpy(adjusted_value_data, new_value.data(), std::min(sizeof(new_value.data()), value_len));
+
+  // 将调整后的数据复制到新的记录数据中
+  memcpy(new_data + field_meta->offset(), adjusted_value_data, value_len);
+
+  // 调用 Table::update_record 更新记录
+  update_result = table->update_record(record.rid(), new_data);
+  if (update_result != RC::SUCCESS) {
+    LOG_ERROR("Failed to update record. rc=%s", strrc(update_result));
+  }
+
+  // 释放内存
+  free(new_data);
+  free(adjusted_value_data);
+
+  return update_result;
+}
+
 
 RC VacuousTrx::visit_record(Table *table, Record &record, ReadWriteMode) { return RC::SUCCESS; }
 
