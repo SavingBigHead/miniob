@@ -136,31 +136,6 @@ RC Db::init(const char *name, const char *dbpath, const char *trx_kit_name, cons
   return rc;
 }
 
-RC Db::create_table(const char *table_name, span<const AttrInfoSqlNode> attributes, const StorageFormat storage_format)
-{
-  RC rc = RC::SUCCESS;
-  // check table_name
-  if (opened_tables_.count(table_name) != 0) {
-    LOG_WARN("%s has been opened before.", table_name);
-    return RC::SCHEMA_TABLE_EXIST;
-  }
-
-  // 文件路径可以移到Table模块
-  string  table_file_path = table_meta_file(path_.c_str(), table_name);
-  Table  *table           = new Table();
-  int32_t table_id        = next_table_id_++;
-  rc = table->create(this, table_id, table_file_path.c_str(), table_name, path_.c_str(), attributes, storage_format);
-  if (rc != RC::SUCCESS) {
-    LOG_ERROR("Failed to create table %s.", table_name);
-    delete table;
-    return rc;
-  }
-
-  opened_tables_[table_name] = table;
-  LOG_INFO("Create table success. table name=%s, table_id:%d", table_name, table_id);
-  return RC::SUCCESS;
-}
-
 Table *Db::find_table(const char *table_name) const
 {
   unordered_map<string, Table *>::const_iterator iter = opened_tables_.find(table_name);
@@ -179,6 +154,62 @@ Table *Db::find_table(int32_t table_id) const
   }
   return nullptr;
 }
+
+RC Db::create_table(const char *table_name, span<const AttrInfoSqlNode> attributes, const StorageFormat storage_format)
+{
+  RC rc = RC::SUCCESS;
+  // check table_name
+  if (opened_tables_.count(table_name) != 0) {
+    LOG_WARN("%s has been opened before.", table_name);
+    return RC::SCHEMA_TABLE_EXIST;
+  }
+
+
+
+  // 文件路径可以移到Table模块
+  string  table_file_path = table_meta_file(path_.c_str(), table_name);
+  Table  *table           = new Table();
+  int32_t table_id        = next_table_id_++;
+  rc = table->create(this, table_id, table_file_path.c_str(), table_name, path_.c_str(), attributes, storage_format);
+  if (rc != RC::SUCCESS) {
+    LOG_ERROR("Failed to create table %s.", table_name);
+    delete table;
+    return rc;
+  }
+
+  opened_tables_[table_name] = table;
+  LOG_INFO("Create table success. table name=%s, table_id:%d", table_name, table_id);
+  return RC::SUCCESS;
+
+
+}
+
+//new
+RC Db::drop_table(const char *table_name){
+
+  // check table_name
+  if (opened_tables_.count(table_name) == 0) {
+    LOG_WARN("%s has been opened before.", table_name);
+    return RC::SCHEMA_TABLE_NOT_EXIST;
+  }
+
+  // 文件路径可以移到Table模块
+  string  table_file_path = table_meta_file(path_.c_str(), table_name);
+  Table  *table           = find_table(table_name);
+
+  if(table == nullptr){
+  LOG_ERROR("Failed to create table",table_name);
+  return RC::SCHEMA_TABLE_NOT_EXIST;
+  }
+
+  table->drop(table_file_path.c_str());
+
+  delete table;
+  opened_tables_.erase(table_name);
+
+  return RC::SUCCESS;
+}
+
 
 RC Db::open_all_tables()
 {
