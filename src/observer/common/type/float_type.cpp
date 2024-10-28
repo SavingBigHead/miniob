@@ -12,9 +12,11 @@ See the Mulan PSL v2 for more details. */
 #include "common/lang/sstream.h"
 #include "common/log/log.h"
 #include "common/type/float_type.h"
+#include "common/type/attr_type.h"
 #include "common/value.h"
 #include "common/lang/limits.h"
 #include "common/value.h"
+#include <climits>
 
 int FloatType::compare(const Value &left, const Value &right) const
 {
@@ -61,7 +63,7 @@ RC FloatType::negative(const Value &val, Value &result) const
 
 RC FloatType::set_value_from_str(Value &val, const string &data) const
 {
-  RC                rc = RC::SUCCESS;
+  RC           rc = RC::SUCCESS;
   stringstream deserialize_stream;
   deserialize_stream.clear();
   deserialize_stream.str(data);
@@ -82,4 +84,28 @@ RC FloatType::to_string(const Value &val, string &result) const
   ss << common::double_to_str(val.value_.float_value_);
   result = ss.str();
   return RC::SUCCESS;
+}
+
+RC FloatType::cast_to(const Value &val, AttrType type, Value &result) const
+{
+  switch (type) {
+    case AttrType::INTS: {
+      result.attr_type_ = AttrType::INTS;
+      result.set_int(static_cast<int64_t>(val.value_.float_value_));
+    }break;
+
+    default: return RC::INVALID_ARGUMENT;
+  }
+  return RC::SUCCESS;
+}
+
+int FloatType::cast_cost(AttrType type) {
+  if (type == AttrType::FLOATS) {
+    return 0;
+  }
+  if (type == AttrType::INTS) {
+    return 2;
+  }
+
+  return INT_MAX;
 }

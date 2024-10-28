@@ -12,7 +12,9 @@ See the Mulan PSL v2 for more details. */
 #include "common/lang/sstream.h"
 #include "common/log/log.h"
 #include "common/type/integer_type.h"
+#include "common/type/attr_type.h"
 #include "common/value.h"
+#include <climits>
 
 int IntegerType::compare(const Value &left, const Value &right) const
 {
@@ -74,4 +76,27 @@ RC IntegerType::to_string(const Value &val, string &result) const
   ss << val.value_.int_value_;
   result = ss.str();
   return RC::SUCCESS;
+}
+
+RC IntegerType::cast_to(const Value &val, AttrType type, Value &result) const {
+  switch(type) {
+    case AttrType::FLOATS : {
+      result.attr_type_ = AttrType::FLOATS;
+      result.set_float(static_cast<float>(result.value_.int_value_));
+    } break;
+    
+    default: return RC::UNIMPLEMENTED;
+  };
+  return RC::SUCCESS;
+}
+
+int IntegerType::cast_cost(AttrType type) {
+  if (type == AttrType::INTS) {
+    return 0;
+  }
+  if (type == AttrType::FLOATS) {
+    return 1;
+  }
+
+  return INT_MAX;
 }

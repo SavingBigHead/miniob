@@ -19,6 +19,7 @@ See the Mulan PSL v2 for more details. */
 #include <utility>
 
 #include "common/types.h"
+#include "sql/expr/expression.h"
 #include "sql/operator/calc_logical_operator.h"
 #include "sql/operator/delete_logical_operator.h"
 #include "sql/operator/explain_logical_operator.h"
@@ -158,72 +159,36 @@ RC LogicalPlanGenerator::create_plan(SelectStmt *select_stmt, unique_ptr<Logical
   return RC::SUCCESS;
 }
 
+// 定义一个逻辑计划生成器类中的create_plan函数，该函数用于根据过滤语句生成逻辑计划。
 RC LogicalPlanGenerator::create_plan(FilterStmt *filter_stmt, unique_ptr<LogicalOperator> &logical_operator)
 {
-  RC                                  rc = RC::SUCCESS;
-  std::vector<unique_ptr<Expression>> cmp_exprs;
-  const std::vector<FilterUnit *>    &filter_units = filter_stmt->filter_units();
-  for (const FilterUnit *filter_unit : filter_units) {
-    const FilterObj &filter_obj_left  = filter_unit->left();
-    const FilterObj &filter_obj_right = filter_unit->right();
+  RC                                  rc = RC::SUCCESS;  // 初始化返回状态为成功
+  std::vector<unique_ptr<Expression>> cmp_exprs;         // 创建一个存储比较表达式的向量
+  const std::vector<FilterUnit *>    &filter_units = filter_stmt->filter_units();  // 获取过滤单位的列表
 
-    unique_ptr<Expression> left(filter_obj_left.is_attr
-                                    ? static_cast<Expression *>(new FieldExpr(filter_obj_left.field))
-                                    : static_cast<Expression *>(new ValueExpr(filter_obj_left.value)));
+  // 遍历每一个过滤单位
+  for (FilterUnit *filter_unit : filter_units) {
+    // 获取当前过滤单位的左侧和右侧过滤对象
 
-    unique_ptr<Expression> right(filter_obj_right.is_attr
-                                     ? static_cast<Expression *>(new FieldExpr(filter_obj_right.field))
-                                     : static_cast<Expression *>(new ValueExpr(filter_obj_right.value)));
+    std::unique_ptr<Expression> left  = std::move(filter_unit->left());
+    std::unique_ptr<Expression> right = std::move(filter_unit->right());
 
-    if (left->value_type() != right->value_type()) {
-      auto left_to_right_cost = implicit_cast_cost(left->value_type(), right->value_type());
-      auto right_to_left_cost = implicit_cast_cost(right->value_type(), left->value_type());
-      if (left_to_right_cost <= right_to_left_cost && left_to_right_cost != INT32_MAX) {
-        ExprType left_type = left->type();
-        auto     cast_expr = make_unique<CastExpr>(std::move(left), right->value_type());
-        if (left_type == ExprType::VALUE) {
-          Value left_val;
-          if (OB_FAIL(rc = cast_expr->try_get_value(left_val))) {
-            LOG_WARN("failed to get value from left child", strrc(rc));
-            return rc;
-          }
-          left = make_unique<ValueExpr>(left_val);
-        } else {
-          left = std::move(cast_expr);
-        }
-      } else if (right_to_left_cost < left_to_right_cost && right_to_left_cost != INT32_MAX) {
-        ExprType right_type = right->type();
-        auto     cast_expr  = make_unique<CastExpr>(std::move(right), left->value_type());
-        if (right_type == ExprType::VALUE) {
-          Value right_val;
-          if (OB_FAIL(rc = cast_expr->try_get_value(right_val))) {
-            LOG_WARN("failed to get value from right child", strrc(rc));
-            return rc;
-          }
-          right = make_unique<ValueExpr>(right_val);
-        } else {
-          right = std::move(cast_expr);
-        }
-
-      } else {
-        rc = RC::UNSUPPORTED;
-        LOG_WARN("unsupported cast from %s to %s", attr_type_to_string(left->value_type()), attr_type_to_string(right->value_type()));
-        return rc;
-      }
-    }
-
+    // 创建比较表达式并添加到比较表达式的向量中
     ComparisonExpr *cmp_expr = new ComparisonExpr(filter_unit->comp(), std::move(left), std::move(right));
-    cmp_exprs.emplace_back(cmp_expr);
+    cmp_exprs.emplace_back(cmp_expr);  // 添加比较表达式
   }
 
-  unique_ptr<PredicateLogicalOperator> predicate_oper;
+  unique_ptr<PredicateLogicalOperator> predicate_oper;  // 创建一个存储谓词逻辑操作符的智能指针
+  // 如果比较表达式向量不为空
   if (!cmp_exprs.empty()) {
-    unique_ptr<ConjunctionExpr> conjunction_expr(new ConjunctionExpr(ConjunctionExpr::Type::AND, cmp_exprs));
-    predicate_oper = unique_ptr<PredicateLogicalOperator>(new PredicateLogicalOperator(std::move(conjunction_expr)));
+    unique_ptr<ConjunctionExpr> conjunction_expr(
+        new ConjunctionExpr(ConjunctionExpr::Type::AND, cmp_exprs));  // 创建连接表达式
+    predicate_oper = unique_ptr<PredicateLogicalOperator>(
+        new PredicateLogicalOperator(std::move(conjunction_expr)));  // 创建谓词逻辑操作符
   }
 
-  logical_operator = std::move(predicate_oper);
-  return rc;
+  logical_operator = std::move(predicate_oper);  // 将生成的逻辑操作符赋值给输出参数
+  return rc;                                     // 返回状态
 }
 
 int LogicalPlanGenerator::implicit_cast_cost(AttrType from, AttrType to)
@@ -275,7 +240,7 @@ RC LogicalPlanGenerator::create_plan(UpdateStmt *update_stmt, unique_ptr<Logical
   Table      *table       = update_stmt->table();
   FilterStmt *filter_stmt = update_stmt->filter_stmt();
   std::string field_name  = update_stmt->field_name();
-  Value       value     = update_stmt->values();
+  Value       value       = update_stmt->values();
 
   unique_ptr<LogicalOperator> table_get_oper(new TableGetLogicalOperator(table, ReadWriteMode::READ_WRITE));
 
@@ -294,7 +259,7 @@ RC LogicalPlanGenerator::create_plan(UpdateStmt *update_stmt, unique_ptr<Logical
   } else {
     update_oper->add_child(std::move(table_get_oper));
   }
-  
+
   logical_operator = std::move(update_oper);
   return rc;
 }
