@@ -16,11 +16,14 @@ See the Mulan PSL v2 for more details. */
 #include "common/lang/string.h"
 #include "common/log/log.h"
 #include "common/rc.h"
+#include "common/type/attr_type.h"
+#include "common/value.h"
 #include "sql/expr/expression.h"
 #include "sql/parser/parse_defs.h"
 #include "storage/db/db.h"
 #include "storage/table/table.h"
 #include <memory>
+#include <regex>
 
 RC resolve_unbound_field_expr(std::unique_ptr<Expression> &expr, Table *default_table, std::unordered_map<std::string, Table *> *tables);
 
@@ -126,6 +129,27 @@ RC FilterStmt::create_filter_unit(Db *db, Table *default_table, std::unordered_m
 RC resolve_unbound_field_expr(std::unique_ptr<Expression> &expr, Table *default_table, std::unordered_map<std::string, Table *> *tables) {
   if (!expr) {
     return RC::SUCCESS;
+  }
+
+  if (expr->type() == ExprType::VALUE) { 
+    if (expr->value_type() == AttrType::CHARS) {
+      ValueExpr *value_expr = static_cast<ValueExpr *>(expr.get());
+
+      Value value;
+      value_expr->get_value(value);
+      std::string str_value = value.get_string();
+      std::regex pattern(R"(^\d{4}-\d{1,2}-\d{1,2}$)");
+      if (std::regex_match(str_value, pattern)) {
+        Value date_value;
+        RC rc = Value::cast_to(value, AttrType::DATES, date_value);
+        if (rc != RC::SUCCESS) {
+          LOG_WARN("Failed to cast date value: %s", str_value.c_str());
+          return rc;
+        }
+        expr.reset(new ValueExpr(date_value));
+        return RC::SUCCESS;
+      }
+    }
   }
 
   // 如果当前表达式是 UnboundFieldExpr，则进行解析并替换为 FieldExpr
