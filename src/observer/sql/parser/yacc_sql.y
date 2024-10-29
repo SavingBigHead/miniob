@@ -526,7 +526,7 @@ expression:
       $$->set_name(token_name(sql_string, &@$));
     }
     | '-' expression %prec UMINUS {
-      $$ = create_arithmetic_expression(ArithmeticExpr::Type::NEGATIVE, $2, nullptr, sql_string, &@$);
+      $$ = create_arithmetic_expression(ArithmeticExpr::Type::NEGATIVE, $2, new ValueExpr(), sql_string, &@$);
     }
     | value {
       $$ = new ValueExpr(*$1);

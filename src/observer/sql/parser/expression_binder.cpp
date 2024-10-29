@@ -17,6 +17,7 @@ See the Mulan PSL v2 for more details. */
 #include "common/log/log.h"
 #include "common/lang/string.h"
 #include "sql/parser/expression_binder.h"
+#include "sql/expr/expression.h"
 #include "sql/expr/expression_iterator.h"
 
 using namespace std;
@@ -311,50 +312,65 @@ RC ExpressionBinder::bind_conjunction_expression(
 RC ExpressionBinder::bind_arithmetic_expression(
     unique_ptr<Expression> &expr, vector<unique_ptr<Expression>> &bound_expressions)
 {
+  // 检查表达式是否为空
   if (nullptr == expr) {
-    return RC::SUCCESS;
+    return RC::SUCCESS; // 如果为空，返回成功
   }
 
+  // 将表达式转换为算术表达式类型
   auto arithmetic_expr = static_cast<ArithmeticExpr *>(expr.get());
 
+  // 用于保存绑定的子表达式
   vector<unique_ptr<Expression>> child_bound_expressions;
-  unique_ptr<Expression>        &left_expr  = arithmetic_expr->left();
-  unique_ptr<Expression>        &right_expr = arithmetic_expr->right();
+  
+  // 获取算术表达式的左侧和右侧子表达式
+  unique_ptr<Expression> &left_expr  = arithmetic_expr->left();
+  unique_ptr<Expression> &right_expr = arithmetic_expr->right();
 
+  // 绑定左侧表达式
   RC rc = bind_expression(left_expr, child_bound_expressions);
   if (OB_FAIL(rc)) {
-    return rc;
+    return rc; // 如果绑定失败，返回错误代码
   }
 
+  // 检查左侧绑定后的子表达式数量是否为1
   if (child_bound_expressions.size() != 1) {
     LOG_WARN("invalid left children number of comparison expression: %d", child_bound_expressions.size());
-    return RC::INVALID_ARGUMENT;
+    return RC::INVALID_ARGUMENT; // 如果数量不符合，返回无效参数错误
   }
 
+  // 获取绑定后的左侧子表达式
   unique_ptr<Expression> &left = child_bound_expressions[0];
+  // 如果左侧绑定的表达式与原表达式不相同，替换原表达式
   if (left.get() != left_expr.get()) {
     left_expr.reset(left.release());
   }
 
+  // 清空子表达式集合，准备绑定右侧表达式
   child_bound_expressions.clear();
   rc = bind_expression(right_expr, child_bound_expressions);
   if (OB_FAIL(rc)) {
-    return rc;
+    return rc; // 如果绑定失败，返回错误代码
   }
-
+  // && arithmetic_expr->arithmetic_type() != ArithmeticExpr::Type::NEGATIVE
+  // 检查右侧绑定后的子表达式数量是否为1
   if (child_bound_expressions.size() != 1) {
     LOG_WARN("invalid right children number of comparison expression: %d", child_bound_expressions.size());
-    return RC::INVALID_ARGUMENT;
+    return RC::INVALID_ARGUMENT; // 如果数量不符合，返回无效参数错误
   }
 
+  // 获取绑定后的右侧子表达式
   unique_ptr<Expression> &right = child_bound_expressions[0];
+  // 如果右侧绑定的表达式与原表达式不相同，替换原表达式
   if (right.get() != right_expr.get()) {
     right_expr.reset(right.release());
   }
 
+  // 将当前表达式移动到已绑定表达式集合中
   bound_expressions.emplace_back(std::move(expr));
-  return RC::SUCCESS;
+  return RC::SUCCESS; // 返回成功
 }
+
 
 RC check_aggregate_expression(AggregateExpr &expression)
 {
