@@ -14,6 +14,7 @@ See the Mulan PSL v2 for more details. */
 
 #include "sql/expr/aggregator.h"
 #include "common/log/log.h"
+#include <limits>
 
 RC SumAggregator::accumulate(const Value &value)
 {
@@ -32,5 +33,69 @@ RC SumAggregator::accumulate(const Value &value)
 RC SumAggregator::evaluate(Value& result)
 {
   result = value_;
+  return RC::SUCCESS;
+}
+
+
+RC CountAggregator::accumulate(const Value &value)
+{
+  count_++;
+  return RC::SUCCESS;
+}
+
+RC CountAggregator::evaluate(Value &result)
+{
+  result.set_int(count_);  
+  return RC::SUCCESS;
+}
+
+RC AvgAggregator::accumulate(const Value &value)
+{
+  if (value.attr_type() == AttrType::UNDEFINED) {
+    return RC::SUCCESS;  // 忽略未定义值
+  }
+
+  //ASSERT(value.attr_type() == AttrType::NUMERIC, "AvgAggregator only supports numeric types.");
+
+  sum_ += value.get_float();  
+  count_++;
+  return RC::SUCCESS;
+}
+
+RC AvgAggregator::evaluate(Value &result)
+{
+  if (count_ == 0) {
+    result.set_int(std::numeric_limits<int>::max());  
+  } else {
+    result.set_float(sum_ / count_);
+  }
+  return RC::SUCCESS;
+}
+
+RC MaxAggregator::accumulate(const Value &value)
+{
+  if (max_value_.attr_type() == AttrType::UNDEFINED || value.compare(max_value_) == 1) {
+    max_value_ = value;
+  }
+  return RC::SUCCESS;
+}
+
+RC MaxAggregator::evaluate(Value &result) 
+{
+  result = max_value_;
+  return RC::SUCCESS;
+}
+
+RC MinAggregator::accumulate(const Value &value)
+{
+  if (min_value_.attr_type() == AttrType::UNDEFINED || value.compare(min_value_) == -1) {
+    min_value_ = value;
+  }
+  return RC::SUCCESS;
+}
+
+RC MinAggregator::evaluate(Value &result) 
+{
+  result = min_value_;
   return RC::SUCCESS;
 }

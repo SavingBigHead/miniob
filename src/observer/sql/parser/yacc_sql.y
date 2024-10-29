@@ -107,6 +107,11 @@ UnboundAggregateExpr *create_aggregate_expression(const char *aggregate_name,
         EXPLAIN
         STORAGE
         FORMAT
+        COUNT
+        AVG
+        SUM
+        MAX
+        MIN
         EQ
         LT
         GT
@@ -527,6 +532,21 @@ expression:
     }
     | '-' expression %prec UMINUS {
       $$ = create_arithmetic_expression(ArithmeticExpr::Type::NEGATIVE, $2, new ValueExpr(), sql_string, &@$);
+    }
+    | COUNT LBRACE expression RBRACE {
+      $$ = create_aggregate_expression("COUNT", $3, sql_string, &@$);
+    }
+    | AVG LBRACE expression RBRACE {
+      $$ = create_aggregate_expression("AVG", $3, sql_string, &@$);
+    }
+    | SUM LBRACE expression RBRACE {
+      $$ = create_aggregate_expression("SUM", $3, sql_string, &@$);
+    }
+    | MAX LBRACE expression RBRACE {
+      $$ = create_aggregate_expression("MAX", $3, sql_string, &@$);
+    }
+    | MIN LBRACE expression RBRACE {
+      $$ = create_aggregate_expression("MIN", $3, sql_string, &@$);
     }
     | value {
       $$ = new ValueExpr(*$1);
