@@ -16,7 +16,6 @@ See the Mulan PSL v2 for more details. */
 #include "common/type/attr_type.h"
 #include "sql/expr/tuple.h"
 #include "sql/expr/arithmetic_operator.hpp"
-<<<<<<< HEAD
 #include "sql/expr/expression.h"
 #include "common/lang/defer.h"
 #include "sql/expr/tuple.h"
@@ -29,9 +28,7 @@ See the Mulan PSL v2 for more details. */
 #include "sql/operator/physical_operator.h"
 #include "sql/optimizer/logical_plan_generator.h"
 #include "sql/optimizer/physical_plan_generator.h"
-=======
 #include <limits>
->>>>>>> origin/2024-competition
 
 using namespace std;
 
@@ -159,14 +156,13 @@ ComparisonExpr::~ComparisonExpr() {}
 
 RC ComparisonExpr::compare_value(const Value &left, const Value &right, bool &result) const
 {
-<<<<<<< HEAD
   RC  rc         = RC::SUCCESS;
 
   if (comp_ == LIKE_OP ) {
     ASSERT(left.attr_type() == AttrType::CHARS || right.attr_type() == AttrType::CHARS, "LIKE_OP lhs or rhs NOT STRING!");
     result = comp_ == LIKE_OP ? str_like(left, right) : !str_like(left, right);
-=======
-  RC rc = RC::SUCCESS;
+    return rc;
+  }
 
   if (left.attr_type() == AttrType::INTS && left.get_int() == std::numeric_limits<int>::max()) {
     result = false;
@@ -180,7 +176,6 @@ RC ComparisonExpr::compare_value(const Value &left, const Value &right, bool &re
     return rc;
   } else if (right.attr_type() == AttrType::FLOATS && right.get_float() == std::numeric_limits<float>::max()) {
     result = false;
->>>>>>> origin/2024-competition
     return rc;
   }
 
