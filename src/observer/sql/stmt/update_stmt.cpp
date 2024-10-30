@@ -18,7 +18,7 @@ See the Mulan PSL v2 for more details. */
 #include "sql/stmt/filter_stmt.h"
 
 UpdateStmt::UpdateStmt(Table *table, std::string field_name, Value values, FilterStmt *filter_stmt)
-    : table_(table), fielter_name_(std::move(field_name)), values_(std::move(values)), filter_stmt_(filter_stmt)
+    : table_(table), field_name_(std::move(field_name)), values_(std::move(values)), filter_stmt_(filter_stmt)
 {}
 
 UpdateStmt::~UpdateStmt()
@@ -44,6 +44,18 @@ RC UpdateStmt::create(Db *db, const UpdateSqlNode &update, Stmt *&stmt)
   if (table == nullptr) {
     LOG_WARN("table %s not found", table_name);
     return RC::SCHEMA_TABLE_NOT_EXIST;
+  }
+
+  const FieldMeta *field_meta = table->table_meta().field(update.attribute_name.c_str());
+  if (field_meta == nullptr) {
+    LOG_WARN("field %s not found in table %s", update.attribute_name.c_str(), table_name);
+    return RC::SCHEMA_FIELD_NOT_EXIST;
+  }
+
+  if (field_meta->type() != update.value.attr_type()) {
+    LOG_WARN("field %s type %d not match value type %d",
+        update.attribute_name.c_str(), field_meta->type(), update.value.attr_type());
+    return RC::SCHEMA_FIELD_TYPE_MISMATCH;
   }
 
   std::unordered_map<std::string, Table *> table_map;

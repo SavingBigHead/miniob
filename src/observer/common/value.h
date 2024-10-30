@@ -95,6 +95,8 @@ public:
     value_.int_value_ = y * 10000 + m * 100 + d;
     attr_type_ = AttrType::DATES;
   }
+  void set_int(int val);
+  void set_float(float val);
 
   string to_string() const;
 
@@ -116,8 +118,6 @@ public:
   bool   get_boolean() const;
 
 private:
-  void set_int(int val);
-  void set_float(float val);
   void set_string(const char *s, int len = 0);
   void set_string_from_other(const Value &other);
 

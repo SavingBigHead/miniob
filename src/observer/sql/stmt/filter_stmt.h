@@ -17,31 +17,33 @@ See the Mulan PSL v2 for more details. */
 #include "sql/expr/expression.h"
 #include "sql/parser/parse_defs.h"
 #include "sql/stmt/stmt.h"
+#include <memory>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 class Db;
 class Table;
 class FieldMeta;
 
-struct FilterObj
-{
-  bool  is_attr;
-  Field field;
-  Value value;
+// struct FilterObj
+// {
+//   bool  is_attr;
+//   Field field;
+//   Value value;
 
-  void init_attr(const Field &field)
-  {
-    is_attr     = true;
-    this->field = field;
-  }
+//   void init_attr(const Field &field)
+//   {
+//     is_attr     = true;
+//     this->field = field;
+//   }
 
-  void init_value(const Value &value)
-  {
-    is_attr     = false;
-    this->value = value;
-  }
-};
+//   void init_value(const Value &value)
+//   {
+//     is_attr     = false;
+//     this->value = value;
+//   }
+// };
 
 class FilterUnit
 {
@@ -53,16 +55,16 @@ public:
 
   CompOp comp() const { return comp_; }
 
-  void set_left(const FilterObj &obj) { left_ = obj; }
-  void set_right(const FilterObj &obj) { right_ = obj; }
+  void set_left(std::unique_ptr<Expression>&& exprs) { left_ = std::move(exprs); }
+  void set_right(std::unique_ptr<Expression>&& exprs) { right_ = std::move(exprs); }
 
-  const FilterObj &left() const { return left_; }
-  const FilterObj &right() const { return right_; }
+  std::unique_ptr<Expression> &left()  { return left_; }
+  std::unique_ptr<Expression> &right() { return right_; }
 
 private:
   CompOp    comp_ = NO_OP;
-  FilterObj left_;
-  FilterObj right_;
+  std::unique_ptr<Expression> left_;
+  std::unique_ptr<Expression> right_;
 };
 
 /**

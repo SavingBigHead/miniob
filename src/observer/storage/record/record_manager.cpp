@@ -13,6 +13,7 @@ See the Mulan PSL v2 for more details. */
 //
 #include "storage/record/record_manager.h"
 #include "common/log/log.h"
+#include "common/rc.h"
 #include "storage/common/condition_filter.h"
 #include "storage/trx/trx.h"
 #include "storage/clog/log_handler.h"
@@ -645,6 +646,29 @@ RC RecordFileHandler::delete_record(const RID *rid)
     LOG_TRACE("add free page %d to free page list", rid->page_num);
     lock_.unlock();
   }
+  return rc;
+}
+
+RC RecordFileHandler::update_record(const RID *rid, const char *new_data, int record_size)
+{
+  RC rc = RC::SUCCESS;
+
+  // 首先删除旧记录
+  rc = delete_record(rid);
+  if (rc != RC::SUCCESS) {
+    LOG_ERROR("Failed to delete old record. rid=%s, rc=%s", rid->to_string().c_str(), strrc(rc));
+    return rc;
+  }
+
+  // 然后插入新记录
+  RID new_rid;
+  rc = insert_record(new_data, record_size, &new_rid);
+  if (rc != RC::SUCCESS) {
+    LOG_ERROR("Failed to insert new record. rc=%s", strrc(rc));
+    return rc;
+  }
+
+  // 更新操作成功
   return rc;
 }
 

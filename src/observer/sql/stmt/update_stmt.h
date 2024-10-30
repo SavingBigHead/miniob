@@ -28,7 +28,7 @@ class UpdateStmt : public Stmt
 {
 public:
   UpdateStmt() = default;
-  UpdateStmt(Table *table, std::string fielter_name, Value values, FilterStmt *filter_stmt);
+  UpdateStmt(Table *table, std::string field_name, Value values, FilterStmt *filter_stmt);
   ~UpdateStmt() override;
   StmtType type() const override { return StmtType::UPDATE; }
 
@@ -36,12 +36,14 @@ public:
   static RC create(Db *db, const UpdateSqlNode &update_sql, Stmt *&stmt);
 
 public:
-  Table *table() const { return table_; }
-  Value  values() const { return values_; }
+  Table      *table() const { return table_; }
+  Value       values() const { return values_; }
+  FilterStmt *filter_stmt() const { return filter_stmt_; }
+  std::string field_name() const { return field_name_; }
 
 private:
-  Table      *table_        = nullptr;
-  std::string fielter_name_ = "";
-  Value       values_       = {};
-  FilterStmt *filter_stmt_  = nullptr;
+  Table      *table_       = nullptr;
+  std::string field_name_  = "";
+  Value       values_      = {};
+  FilterStmt *filter_stmt_ = nullptr;
 };

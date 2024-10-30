@@ -1,4 +1,4 @@
-#line 2 "lex_sql.cpp"
+#line 1 "lex_sql.cpp"
 /*
 这里的代码会被复制到lex_sql.cpp的最开始位置
 定义yy_size_t的原因是因为flex生成的代码，会使用yy_size_t与其他类型的数字
@@ -22,7 +22,7 @@ do {                                                         \
 }                                                            \
 while (0);
 
-#line 26 "lex_sql.cpp"
+#line 25 "lex_sql.cpp"
 
 #define  YY_INT_ALIGNED short int
 
@@ -385,8 +385,13 @@ static void yynoreturn yy_fatal_error ( const char* msg , yyscan_t yyscanner );
 	yyg->yy_hold_char = *yy_cp; \
 	*yy_cp = '\0'; \
 	yyg->yy_c_buf_p = yy_cp;
+<<<<<<< HEAD
 #define YY_NUM_RULES 64
 #define YY_END_OF_BUFFER 65
+=======
+#define YY_NUM_RULES 68
+#define YY_END_OF_BUFFER 69
+>>>>>>> origin/2024-competition
 /* This struct is not used in this scanner,
    but its presence is necessary. */
 struct yy_trans_info
@@ -394,6 +399,7 @@ struct yy_trans_info
 	flex_int32_t yy_verify;
 	flex_int32_t yy_nxt;
 	};
+<<<<<<< HEAD
 static const flex_int16_t yy_accept[192] =
     {   0,
         0,    0,    0,    0,   65,   63,    1,    2,   63,   63,
@@ -417,6 +423,31 @@ static const flex_int16_t yy_accept[192] =
        46,   21,   31,   10,   27,   46,   45,   40,   24,   46,
        18,   46,   13,   28,   26,   37,   41,   46,   44,   32,
         0
+=======
+static const flex_int16_t yy_accept[201] =
+    {   0,
+        0,    0,    0,    0,   69,   67,    1,    2,   67,   67,
+       67,   51,   52,   63,   61,   53,   62,    6,   64,    3,
+        5,   58,   54,   60,   50,   50,   50,   50,   50,   50,
+       50,   50,   50,   50,   50,   50,   50,   50,   50,   50,
+       50,   50,   50,   68,   57,    0,   65,    0,   66,    0,
+        3,   55,   56,   59,   50,   50,   50,   50,   50,   42,
+       50,   50,   50,   50,   50,   50,   50,   50,   50,   50,
+       50,   50,   50,   50,   50,   50,   50,   15,   50,   50,
+       50,   50,   50,   50,   50,   50,   50,   50,   50,    4,
+       22,   46,   50,   50,   50,   50,   50,   50,   50,   50,
+
+       50,   50,   50,   50,   50,   50,   50,   50,   50,   50,
+       50,   50,   32,   50,   47,   48,   50,   50,   28,   50,
+       50,   49,   50,   50,   50,   50,   50,   50,   50,   19,
+       33,   50,   50,   50,   38,   34,   50,    9,   11,    7,
+       50,   50,   50,   20,   50,    8,   50,   50,   50,   24,
+       37,   50,   50,   16,   50,   17,   50,   50,   50,   50,
+       50,   29,   50,   45,   50,   50,   50,   35,   50,   41,
+       14,   50,   50,   50,   50,   50,   12,   50,   50,   50,
+       21,   30,   10,   26,   50,   44,   39,   23,   50,   18,
+       50,   13,   27,   25,   36,   40,   50,   43,   31,    0
+>>>>>>> origin/2024-competition
 
     } ;
 
@@ -463,6 +494,7 @@ static const YY_CHAR yy_meta[67] =
         2,    2,    2,    2,    2,    2
     } ;
 
+<<<<<<< HEAD
 static const flex_int16_t yy_base[197] =
     {   0,
         0,    0,    0,    0,  511,  512,  512,  512,  492,  504,
@@ -486,9 +518,36 @@ static const flex_int16_t yy_base[197] =
       430,  270,  195,  194,  183,  436,  181,  180,  172,  442,
       129,  438,  113,  111,  109,   83,   78,  448,   74,   73,
       512,  501,  503,  505,   82,   75
+=======
+static const flex_int16_t yy_base[206] =
+    {   0,
+        0,    0,    0,    0,  535,  536,  536,  536,  516,  528,
+      526,  536,  536,  536,  536,  536,  536,  536,  536,   54,
+      536,   52,  536,  513,   53,   57,   60,   59,   70,   91,
+       61,   67,   75,  515,   87,  109,   77,   98,  147,  119,
+      111,  132,  113,  536,  536,  524,  536,  522,  536,  512,
+       86,  536,  536,  536,    0,  511,  126,  128,  142,  510,
+      127,  145,  152,  151,  121,  157,  136,  168,  172,  164,
+      182,  187,  197,  209,  210,  162,  186,  509,  207,  221,
+      203,  216,  225,  220,  234,  218,  233,  252,  247,  508,
+      507,  499,  253,  262,  230,  268,  257,  271,  273,  270,
 
+      281,  277,  263,  289,  287,  284,  294,  291,  299,  304,
+      310,  317,  314,  321,  498,  497,  325,  318,  496,  296,
+      331,  493,  332,  330,  343,  335,  344,  336,  340,  492,
+      490,  349,  354,  355,  489,  488,  360,  487,  486,  485,
+      365,  361,  366,  484,  368,  481,  376,  373,  387,  480,
+      475,  379,  391,  474,  392,  471,  396,  393,  404,  399,
+      410,  467,  402,  466,  414,  424,  415,  464,  417,  438,
+      374,  427,  430,  444,  432,  434,  420,  450,  446,  435,
+      307,  295,  248,  228,  454,  200,  195,  190,  451,  123,
+      461,  115,   99,   83,   74,   73,  462,   69,   63,  536,
+>>>>>>> origin/2024-competition
+
+      515,  517,  519,   75,   71
     } ;
 
+<<<<<<< HEAD
 static const flex_int16_t yy_def[197] =
     {   0,
       191,    1,  192,  192,  191,  191,  191,  191,  191,  193,
@@ -512,14 +571,45 @@ static const flex_int16_t yy_def[197] =
       195,  195,  195,  195,  195,  195,  195,  195,  195,  195,
       195,  195,  195,  195,  195,  195,  195,  195,  195,  195,
         0,  191,  191,  191,  191,  191
+=======
+static const flex_int16_t yy_def[206] =
+    {   0,
+      200,    1,  201,  201,  200,  200,  200,  200,  200,  202,
+      203,  200,  200,  200,  200,  200,  200,  200,  200,  200,
+      200,  200,  200,  200,  204,  204,  204,  204,  204,  204,
+      204,  204,  204,  204,  204,  204,  204,  204,  204,  204,
+      204,  204,  204,  200,  200,  202,  200,  203,  200,  200,
+      200,  200,  200,  200,  205,  204,  204,  204,  204,  204,
+      204,  204,  204,  204,  204,  204,  204,  204,  204,  204,
+      204,  204,  204,  204,  204,  204,  204,  204,  204,  204,
+      204,  204,  204,  204,  204,  204,  204,  204,  204,  200,
+      204,  204,  204,  204,  204,  204,  204,  204,  204,  204,
 
+      204,  204,  204,  204,  204,  204,  204,  204,  204,  204,
+      204,  204,  204,  204,  204,  204,  204,  204,  204,  204,
+      204,  204,  204,  204,  204,  204,  204,  204,  204,  204,
+      204,  204,  204,  204,  204,  204,  204,  204,  204,  204,
+      204,  204,  204,  204,  204,  204,  204,  204,  204,  204,
+      204,  204,  204,  204,  204,  204,  204,  204,  204,  204,
+      204,  204,  204,  204,  204,  204,  204,  204,  204,  204,
+      204,  204,  204,  204,  204,  204,  204,  204,  204,  204,
+      204,  204,  204,  204,  204,  204,  204,  204,  204,  204,
+      204,  204,  204,  204,  204,  204,  204,  204,  204,    0,
+>>>>>>> origin/2024-competition
+
+      200,  200,  200,  200,  200
     } ;
 
+<<<<<<< HEAD
 static const flex_int16_t yy_nxt[579] =
+=======
+static const flex_int16_t yy_nxt[603] =
+>>>>>>> origin/2024-competition
     {   0,
         6,    7,    8,    9,   10,   11,   12,   13,   14,   15,
        16,   17,   18,   19,   20,   21,   22,   23,   24,   25,
        26,   27,   28,   29,   30,   31,   32,   33,   34,   34,
+<<<<<<< HEAD
        35,   34,   34,   36,   34,   37,   38,   39,   40,   41,
        42,   34,   34,   25,   26,   27,   28,   29,   30,   31,
        32,   33,   34,   35,   34,   34,   36,   34,   37,   38,
@@ -583,6 +673,75 @@ static const flex_int16_t yy_nxt[579] =
     } ;
 
 static const flex_int16_t yy_chk[579] =
+=======
+       35,   36,   34,   37,   34,   38,   39,   40,   41,   42,
+       43,   34,   34,   25,   26,   27,   28,   29,   30,   31,
+       32,   33,   34,   35,   36,   34,   37,   34,   38,   39,
+       40,   41,   42,   43,   34,   34,   50,   55,   51,   52,
+       53,   55,   55,   55,   55,   55,   56,   55,   65,   61,
+       59,   55,   66,   55,   55,   57,   62,   55,   55,   55,
+       73,   55,   58,   63,   67,   64,   72,   55,   50,   60,
+
+       51,   55,   65,   61,   59,   55,   66,   74,   57,   78,
+       62,   68,   55,   55,   73,   58,   63,   67,   64,   72,
+       75,   69,   60,   55,   70,   55,   71,   55,   76,   55,
+       74,   79,   78,   55,   68,   55,   77,   55,   85,   89,
+       55,   55,   55,   75,   69,   86,   55,   70,   91,   71,
+       55,   87,   76,   92,   79,   88,   55,   94,   99,   55,
+       77,   55,   85,   89,   95,   55,   55,   93,   86,  102,
+       80,   55,   91,   81,   98,   87,   55,   92,   55,   88,
+       94,   99,   55,   96,   82,   83,   55,  100,   95,   84,
+       97,   93,  102,  101,   80,  103,   55,   81,   98,  106,
+
+       55,   55,  104,  115,   55,  105,   96,   82,   83,   55,
+      100,   55,   84,   97,   55,  107,  101,   55,  116,  103,
+      108,   55,  106,   55,   55,  104,  115,  109,  105,  114,
+       55,  110,   55,  111,   55,   55,  120,  117,  107,   55,
+      125,  116,   55,  108,   55,  112,  113,   55,   55,  121,
+      109,  118,  123,  114,  124,  110,  122,  111,  119,  120,
+      117,   55,   55,  126,  125,  131,   55,   55,  112,  113,
+      128,   55,  121,  127,  118,  123,   55,   55,  124,  122,
+      129,  119,   55,  130,   55,   55,  126,   55,  131,  133,
+      134,   55,  135,  137,  128,   55,  136,  127,   55,  132,
+
+      140,   55,  138,   55,  129,   55,  142,  130,   55,   55,
+       55,  139,  133,   55,  134,  143,  135,  137,   55,  141,
+      136,   55,  132,  140,   55,  144,  138,  147,   55,  145,
+      142,   55,   55,  146,  139,   55,  154,  148,  143,   55,
+      149,  153,  141,  151,   55,   55,   55,  150,  144,   55,
+       55,  147,  145,  156,   55,  152,  146,   55,   55,  154,
+      157,  148,  158,   55,  149,  153,  155,  151,   55,   55,
+      150,  161,  162,  159,   55,   55,  163,  156,  152,   55,
+       55,  160,   55,  157,  167,  169,  158,   55,   55,  155,
+       55,  164,  165,   55,  161,  162,  159,  166,  168,  174,
+
+      163,   55,  170,  172,  160,   55,   55,   55,  167,  169,
+       55,  176,  175,   55,  164,  165,   55,  171,   55,  177,
+      166,  168,  173,  174,   55,  170,  172,  179,   55,   55,
+      178,   55,  180,  181,   55,  176,  175,  183,   55,  182,
+      171,   55,  185,  177,   55,  173,   55,  184,   55,   55,
+      187,  179,   55,  178,  186,  180,  192,  181,   55,  191,
+       55,  183,  182,  189,   55,   55,  185,  188,   55,  190,
+      195,  184,  197,  193,  187,   55,   55,  186,   55,  192,
+       55,   55,  194,  191,  198,   55,  196,  189,   55,   55,
+      188,  199,  190,  195,   55,   55,  197,  193,   55,   55,
+
+       55,   55,   55,   55,   55,  194,   55,   55,  198,  196,
+       55,   55,   55,   55,  199,   44,   44,   46,   46,   48,
+       48,   55,   90,   55,   55,   55,   90,   49,   47,   55,
+       54,   49,   47,   45,  200,    5,  200,  200,  200,  200,
+      200,  200,  200,  200,  200,  200,  200,  200,  200,  200,
+      200,  200,  200,  200,  200,  200,  200,  200,  200,  200,
+      200,  200,  200,  200,  200,  200,  200,  200,  200,  200,
+      200,  200,  200,  200,  200,  200,  200,  200,  200,  200,
+      200,  200,  200,  200,  200,  200,  200,  200,  200,  200,
+      200,  200,  200,  200,  200,  200,  200,  200,  200,  200,
+
+      200,  200
+    } ;
+
+static const flex_int16_t yy_chk[603] =
+>>>>>>> origin/2024-competition
     {   0,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
@@ -591,6 +750,7 @@ static const flex_int16_t yy_chk[579] =
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,   20,   25,   20,   22,
+<<<<<<< HEAD
        22,   26,   39,   28,   27,   31,  196,   39,   28,   27,
        26,   32,   28,  195,   29,   25,   27,  190,  189,   33,
        32,   36,  187,   27,   28,   27,   31,  186,   49,   26,
@@ -647,6 +807,68 @@ static const flex_int16_t yy_chk[579] =
       191,  191,  191,  191,  191,  191,  191,  191,  191,  191,
       191,  191,  191,  191,  191,  191,  191,  191,  191,  191,
       191,  191,  191,  191,  191,  191,  191,  191
+=======
+       22,   26,  205,   28,   27,   31,  204,  199,   28,   27,
+       26,   32,   28,  198,   29,   25,   27,  196,  195,   33,
+       32,   37,   25,   27,   28,   27,   31,  194,   51,   26,
+
+       51,   35,   28,   27,   26,   30,   28,   33,   25,   37,
+       27,   29,   38,  193,   32,   25,   27,   28,   27,   31,
+       35,   30,   26,   36,   30,   41,   30,   43,   36,  192,
+       33,   38,   37,   40,   29,   65,   36,  190,   40,   43,
+       57,   61,   58,   35,   30,   41,   42,   30,   57,   30,
+       67,   42,   36,   58,   38,   42,   59,   61,   65,   62,
+       36,   39,   40,   43,   62,   64,   63,   59,   41,   67,
+       39,   66,   57,   39,   64,   42,   76,   58,   70,   42,
+       61,   65,   68,   63,   39,   39,   69,   66,   62,   39,
+       63,   59,   67,   66,   39,   68,   71,   39,   64,   70,
+
+       77,   72,   68,   76,  188,   69,   63,   39,   39,  187,
+       66,   73,   39,   63,  186,   71,   66,   81,   77,   68,
+       72,   79,   70,   74,   75,   68,   76,   73,   69,   75,
+       82,   74,   86,   74,   84,   80,   81,   79,   71,   83,
+       86,   77,  184,   72,   95,   74,   74,   87,   85,   82,
+       73,   80,   84,   75,   85,   74,   83,   74,   80,   81,
+       79,   89,  183,   87,   86,   95,   88,   93,   74,   74,
+       89,   97,   82,   88,   80,   84,   94,  103,   85,   83,
+       93,   80,   96,   94,  100,   98,   87,   99,   95,   97,
+       98,  102,   99,  100,   89,  101,   99,   88,  106,   96,
+
+      103,  105,  101,  104,   93,  108,  105,   94,  107,  182,
+      120,  102,   97,  109,   98,  106,   99,  100,  110,  104,
+       99,  181,   96,  103,  111,  107,  101,  110,  113,  108,
+      105,  112,  118,  109,  102,  114,  120,  111,  106,  117,
+      112,  118,  104,  114,  124,  121,  123,  113,  107,  126,
+      128,  110,  108,  123,  129,  117,  109,  125,  127,  120,
+      124,  111,  125,  132,  112,  118,  121,  114,  133,  134,
+      113,  128,  129,  126,  137,  142,  132,  123,  117,  141,
+      143,  127,  145,  124,  141,  143,  125,  148,  171,  121,
+      147,  133,  134,  152,  128,  129,  126,  137,  142,  152,
+
+      132,  149,  145,  148,  127,  153,  155,  158,  141,  143,
+      157,  155,  153,  160,  133,  134,  163,  147,  159,  157,
+      137,  142,  149,  152,  161,  145,  148,  159,  165,  167,
+      158,  169,  160,  161,  177,  155,  153,  165,  166,  163,
+      147,  172,  167,  157,  173,  149,  175,  166,  176,  180,
+      172,  159,  170,  158,  169,  160,  177,  161,  174,  176,
+      179,  165,  163,  174,  178,  189,  167,  173,  185,  175,
+      180,  166,  189,  178,  172,  191,  197,  169,  168,  177,
+      164,  162,  179,  176,  191,  156,  185,  174,  154,  151,
+      173,  197,  175,  180,  150,  146,  189,  178,  144,  140,
+
+      139,  138,  136,  135,  131,  179,  130,  122,  191,  185,
+      119,  116,  115,   92,  197,  201,  201,  202,  202,  203,
+      203,   91,   90,   78,   60,   56,   50,   48,   46,   34,
+       24,   11,   10,    9,    5,  200,  200,  200,  200,  200,
+      200,  200,  200,  200,  200,  200,  200,  200,  200,  200,
+      200,  200,  200,  200,  200,  200,  200,  200,  200,  200,
+      200,  200,  200,  200,  200,  200,  200,  200,  200,  200,
+      200,  200,  200,  200,  200,  200,  200,  200,  200,  200,
+      200,  200,  200,  200,  200,  200,  200,  200,  200,  200,
+      200,  200,  200,  200,  200,  200,  200,  200,  200,  200,
+
+      200,  200
+>>>>>>> origin/2024-competition
     } ;
 
 /* The intent behind this definition is that it'll catch
@@ -681,7 +903,11 @@ extern int atoi();
 extern double atof();
 
 #define RETURN_TOKEN(token) LOG_DEBUG("%s", #token);return token
+<<<<<<< HEAD
 #line 685 "lex_sql.cpp"
+=======
+#line 694 "lex_sql.cpp"
+>>>>>>> origin/2024-competition
 /* Prevent the need for linking with -lfl */
 #define YY_NO_INPUT 1
 /* 不区分大小写 */
@@ -690,7 +916,11 @@ extern double atof();
 /* 1. 匹配的规则长的优先 */
 /* 2. 写在最前面的优先 */
 /* yylval 就可以认为是 yacc 中 %union 定义的结构体(union 结构) */
+<<<<<<< HEAD
 #line 694 "lex_sql.cpp"
+=======
+#line 703 "lex_sql.cpp"
+>>>>>>> origin/2024-competition
 
 #define INITIAL 0
 #define STR 1
@@ -976,7 +1206,11 @@ YY_DECL
 #line 75 "lex_sql.l"
 
 
+<<<<<<< HEAD
 #line 980 "lex_sql.cpp"
+=======
+#line 989 "lex_sql.cpp"
+>>>>>>> origin/2024-competition
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -1003,13 +1237,21 @@ yy_match:
 			while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 				{
 				yy_current_state = (int) yy_def[yy_current_state];
+<<<<<<< HEAD
 				if ( yy_current_state >= 192 )
+=======
+				if ( yy_current_state >= 201 )
+>>>>>>> origin/2024-competition
 					yy_c = yy_meta[yy_c];
 				}
 			yy_current_state = yy_nxt[yy_base[yy_current_state] + yy_c];
 			++yy_cp;
 			}
+<<<<<<< HEAD
 		while ( yy_base[yy_current_state] != 512 );
+=======
+		while ( yy_base[yy_current_state] != 536 );
+>>>>>>> origin/2024-competition
 
 yy_find_action:
 		yy_act = yy_accept[yy_current_state];
@@ -1256,6 +1498,7 @@ RETURN_TOKEN(STORAGE);
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
+<<<<<<< HEAD
 #line 123 "lex_sql.l"
 RETURN_TOKEN(FORMAT);
 	YY_BREAK
@@ -1273,10 +1516,30 @@ case 48:
 YY_RULE_SETUP
 #line 126 "lex_sql.l"
 RETURN_TOKEN(RBRACE);
+=======
+#line 124 "lex_sql.l"
+RETURN_TOKEN(COUNT);
+	YY_BREAK
+case 46:
+YY_RULE_SETUP
+#line 125 "lex_sql.l"
+RETURN_TOKEN(AVG);
+	YY_BREAK
+case 47:
+YY_RULE_SETUP
+#line 126 "lex_sql.l"
+RETURN_TOKEN(MAX);
+	YY_BREAK
+case 48:
+YY_RULE_SETUP
+#line 127 "lex_sql.l"
+RETURN_TOKEN(MIN);
+>>>>>>> origin/2024-competition
 	YY_BREAK
 case 49:
 YY_RULE_SETUP
 #line 128 "lex_sql.l"
+<<<<<<< HEAD
 RETURN_TOKEN(COMMA);
 	YY_BREAK
 case 50:
@@ -1288,14 +1551,28 @@ case 51:
 YY_RULE_SETUP
 #line 130 "lex_sql.l"
 RETURN_TOKEN(LE);
+=======
+RETURN_TOKEN(SUM);
+	YY_BREAK
+case 50:
+YY_RULE_SETUP
+#line 130 "lex_sql.l"
+yylval->string=strdup(yytext); RETURN_TOKEN(ID);
+	YY_BREAK
+case 51:
+YY_RULE_SETUP
+#line 131 "lex_sql.l"
+RETURN_TOKEN(LBRACE);
+>>>>>>> origin/2024-competition
 	YY_BREAK
 case 52:
 YY_RULE_SETUP
-#line 131 "lex_sql.l"
-RETURN_TOKEN(NE);
+#line 132 "lex_sql.l"
+RETURN_TOKEN(RBRACE);
 	YY_BREAK
 case 53:
 YY_RULE_SETUP
+<<<<<<< HEAD
 #line 132 "lex_sql.l"
 RETURN_TOKEN(NE);
 	YY_BREAK
@@ -1313,12 +1590,38 @@ case 56:
 YY_RULE_SETUP
 #line 135 "lex_sql.l"
 RETURN_TOKEN(GT);
+=======
+#line 134 "lex_sql.l"
+RETURN_TOKEN(COMMA);
+	YY_BREAK
+case 54:
+YY_RULE_SETUP
+#line 135 "lex_sql.l"
+RETURN_TOKEN(EQ);
+	YY_BREAK
+case 55:
+YY_RULE_SETUP
+#line 136 "lex_sql.l"
+RETURN_TOKEN(LE);
+	YY_BREAK
+case 56:
+YY_RULE_SETUP
+#line 137 "lex_sql.l"
+RETURN_TOKEN(NE);
+>>>>>>> origin/2024-competition
 	YY_BREAK
 case 57:
+YY_RULE_SETUP
 #line 138 "lex_sql.l"
+RETURN_TOKEN(NE);
+	YY_BREAK
 case 58:
+YY_RULE_SETUP
 #line 139 "lex_sql.l"
+RETURN_TOKEN(LT);
+	YY_BREAK
 case 59:
+<<<<<<< HEAD
 #line 140 "lex_sql.l"
 case 60:
 YY_RULE_SETUP
@@ -1327,18 +1630,56 @@ YY_RULE_SETUP
 	YY_BREAK
 case 61:
 /* rule 61 can match eol */
+=======
+YY_RULE_SETUP
+#line 140 "lex_sql.l"
+RETURN_TOKEN(GE);
+	YY_BREAK
+case 60:
+>>>>>>> origin/2024-competition
 YY_RULE_SETUP
 #line 141 "lex_sql.l"
+RETURN_TOKEN(GT);
+	YY_BREAK
+case 61:
+#line 144 "lex_sql.l"
+case 62:
+#line 145 "lex_sql.l"
+case 63:
+#line 146 "lex_sql.l"
+case 64:
+YY_RULE_SETUP
+#line 146 "lex_sql.l"
+{ return yytext[0]; }
+	YY_BREAK
+case 65:
+/* rule 65 can match eol */
+YY_RULE_SETUP
+#line 147 "lex_sql.l"
 yylval->string = strdup(yytext); RETURN_TOKEN(SSS);
 	YY_BREAK
+<<<<<<< HEAD
 case 62:
 /* rule 62 can match eol */
 YY_RULE_SETUP
 #line 142 "lex_sql.l"
 yylval->string = strdup(yytext); RETURN_TOKEN(SSS);
-	YY_BREAK
-case 63:
+=======
+case 66:
+/* rule 66 can match eol */
 YY_RULE_SETUP
+#line 148 "lex_sql.l"
+yylval->string = strdup(yytext); RETURN_TOKEN(SSS);
+	YY_BREAK
+case 67:
+YY_RULE_SETUP
+#line 150 "lex_sql.l"
+LOG_DEBUG("Unknown character [%c]",yytext[0]); return yytext[0];
+>>>>>>> origin/2024-competition
+	YY_BREAK
+case 68:
+YY_RULE_SETUP
+<<<<<<< HEAD
 #line 144 "lex_sql.l"
 LOG_DEBUG("Unknown character [%c]",yytext[0]); return yytext[0];
 	YY_BREAK
@@ -1348,6 +1689,12 @@ YY_RULE_SETUP
 ECHO;
 	YY_BREAK
 #line 1351 "lex_sql.cpp"
+=======
+#line 151 "lex_sql.l"
+ECHO;
+	YY_BREAK
+#line 1380 "lex_sql.cpp"
+>>>>>>> origin/2024-competition
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(STR):
 	yyterminate();
@@ -1647,7 +1994,11 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 		while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 			{
 			yy_current_state = (int) yy_def[yy_current_state];
+<<<<<<< HEAD
 			if ( yy_current_state >= 192 )
+=======
+			if ( yy_current_state >= 201 )
+>>>>>>> origin/2024-competition
 				yy_c = yy_meta[yy_c];
 			}
 		yy_current_state = yy_nxt[yy_base[yy_current_state] + yy_c];
@@ -1676,11 +2027,19 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 	while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 		{
 		yy_current_state = (int) yy_def[yy_current_state];
+<<<<<<< HEAD
 		if ( yy_current_state >= 192 )
 			yy_c = yy_meta[yy_c];
 		}
 	yy_current_state = yy_nxt[yy_base[yy_current_state] + yy_c];
 	yy_is_jam = (yy_current_state == 191);
+=======
+		if ( yy_current_state >= 201 )
+			yy_c = yy_meta[yy_c];
+		}
+	yy_current_state = yy_nxt[yy_base[yy_current_state] + yy_c];
+	yy_is_jam = (yy_current_state == 200);
+>>>>>>> origin/2024-competition
 
 	(void)yyg;
 	return yy_is_jam ? 0 : yy_current_state;
@@ -2503,7 +2862,11 @@ void yyfree (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
+<<<<<<< HEAD
 #line 145 "lex_sql.l"
+=======
+#line 151 "lex_sql.l"
+>>>>>>> origin/2024-competition
 
 
 void scan_string(const char *str, yyscan_t scanner) {

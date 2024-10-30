@@ -13,8 +13,10 @@ See the Mulan PSL v2 for more details. */
 //
 #include <regex>
 #include "sql/expr/expression.h"
+#include "common/type/attr_type.h"
 #include "sql/expr/tuple.h"
 #include "sql/expr/arithmetic_operator.hpp"
+<<<<<<< HEAD
 #include "sql/expr/expression.h"
 #include "common/lang/defer.h"
 #include "sql/expr/tuple.h"
@@ -27,6 +29,9 @@ See the Mulan PSL v2 for more details. */
 #include "sql/operator/physical_operator.h"
 #include "sql/optimizer/logical_plan_generator.h"
 #include "sql/optimizer/physical_plan_generator.h"
+=======
+#include <limits>
+>>>>>>> origin/2024-competition
 
 using namespace std;
 
@@ -103,7 +108,7 @@ RC CastExpr::cast(const Value &value, Value &cast_value) const
 RC CastExpr::get_value(const Tuple &tuple, Value &result) const
 {
   Value value;
-  RC rc = child_->get_value(tuple, value);
+  RC    rc = child_->get_value(tuple, value);
   if (rc != RC::SUCCESS) {
     return rc;
   }
@@ -114,7 +119,7 @@ RC CastExpr::get_value(const Tuple &tuple, Value &result) const
 RC CastExpr::try_get_value(Value &result) const
 {
   Value value;
-  RC rc = child_->try_get_value(value);
+  RC    rc = child_->try_get_value(value);
   if (rc != RC::SUCCESS) {
     return rc;
   }
@@ -154,11 +159,28 @@ ComparisonExpr::~ComparisonExpr() {}
 
 RC ComparisonExpr::compare_value(const Value &left, const Value &right, bool &result) const
 {
+<<<<<<< HEAD
   RC  rc         = RC::SUCCESS;
 
   if (comp_ == LIKE_OP ) {
     ASSERT(left.attr_type() == AttrType::CHARS || right.attr_type() == AttrType::CHARS, "LIKE_OP lhs or rhs NOT STRING!");
     result = comp_ == LIKE_OP ? str_like(left, right) : !str_like(left, right);
+=======
+  RC rc = RC::SUCCESS;
+
+  if (left.attr_type() == AttrType::INTS && left.get_int() == std::numeric_limits<int>::max()) {
+    result = false;
+    return rc;
+  } else if (left.attr_type() == AttrType::FLOATS && left.get_float() == std::numeric_limits<float>::max()) {
+    result = false;
+    return rc;
+  }
+  if (right.attr_type() == AttrType::INTS && right.get_int() == std::numeric_limits<int>::max()) {
+    result = false;
+    return rc;
+  } else if (right.attr_type() == AttrType::FLOATS && right.get_float() == std::numeric_limits<float>::max()) {
+    result = false;
+>>>>>>> origin/2024-competition
     return rc;
   }
 
@@ -195,8 +217,8 @@ RC ComparisonExpr::compare_value(const Value &left, const Value &right, bool &re
 RC ComparisonExpr::try_get_value(Value &cell) const
 {
   if (left_->type() == ExprType::VALUE && right_->type() == ExprType::VALUE) {
-    ValueExpr *  left_value_expr  = static_cast<ValueExpr *>(left_.get());
-    ValueExpr *  right_value_expr = static_cast<ValueExpr *>(right_.get());
+    ValueExpr   *left_value_expr  = static_cast<ValueExpr *>(left_.get());
+    ValueExpr   *right_value_expr = static_cast<ValueExpr *>(right_.get());
     const Value &left_cell        = left_value_expr->get_value();
     const Value &right_cell       = right_value_expr->get_value();
 
@@ -360,6 +382,23 @@ RC ArithmeticExpr::calc_value(const Value &left_value, const Value &right_value,
 {
   RC rc = RC::SUCCESS;
 
+  if (left_value.attr_type() == AttrType::INTS && left_value.get_int() == std::numeric_limits<int>::max()) {
+    value.set_int(std::numeric_limits<int>::max());
+    return rc;
+  } else if (left_value.attr_type() == AttrType::FLOATS &&
+             left_value.get_float() == std::numeric_limits<float>::max()) {
+    value.set_float(std::numeric_limits<float>::max());
+    return rc;
+  }
+  if (right_value.attr_type() == AttrType::INTS && right_value.get_int() == std::numeric_limits<int>::max()) {
+    value.set_int(std::numeric_limits<int>::max());
+    return rc;
+  } else if (right_value.attr_type() == AttrType::FLOATS &&
+             right_value.get_float() == std::numeric_limits<float>::max()) {
+    value.set_float(std::numeric_limits<float>::max());
+    return rc;
+  }
+
   const AttrType target_type = value_type();
   value.set_type(target_type);
 
@@ -472,6 +511,7 @@ RC ArithmeticExpr::get_value(const Tuple &tuple, Value &value) const
     LOG_WARN("failed to get value of left expression. rc=%s", strrc(rc));
     return rc;
   }
+
   rc = right_->get_value(tuple, right_value);
   if (rc != RC::SUCCESS) {
     LOG_WARN("failed to get value of right expression. rc=%s", strrc(rc));
@@ -592,6 +632,22 @@ unique_ptr<Aggregator> AggregateExpr::create_aggregator() const
   switch (aggregate_type_) {
     case Type::SUM: {
       aggregator = make_unique<SumAggregator>();
+      break;
+    }
+    case Type::AVG: {
+      aggregator = make_unique<AvgAggregator>();
+      break;
+    }
+    case Type::MAX: {
+      aggregator = make_unique<MaxAggregator>();
+      break;
+    }
+    case Type::MIN: {
+      aggregator = make_unique<MinAggregator>();
+      break;
+    }
+    case Type::COUNT: {
+      aggregator = make_unique<CountAggregator>();
       break;
     }
     default: {
