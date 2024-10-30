@@ -19,6 +19,9 @@ See the Mulan PSL v2 for more details. */
 #include "common/lang/sstream.h"
 #include "common/lang/string.h"
 #include "common/log/log.h"
+#include "common/type/attr_type.h"
+#include <string>
+#include <vector>
 
 Value::Value(int val) { set_int(val); }
 
@@ -27,6 +30,15 @@ Value::Value(float val) { set_float(val); }
 Value::Value(bool val) { set_boolean(val); }
 
 Value::Value(const char *s, int len /*= 0*/) { set_string(s, len); }
+
+Value::Value(const char *s, AttrType type)
+{
+  if (type == AttrType::VECTORS) {
+    set_vector(s);
+  } else {
+    set_string(s, 0);
+  }
+}
 
 Value::Value(const Value &other)
 {
@@ -127,7 +139,11 @@ void Value::set_data(char *data, int length)
     } break;
     case AttrType::DATES: {
       value_.int_value_ = *(int *)data;
-      length_            = length;
+      length_           = length;
+    } break;
+    case AttrType::VECTORS: {
+      value_.vector_value_ = (float *)data;
+      length_             = length;
     } break;
     default: {
       LOG_WARN("unknown data type: %d", attr_type_);
@@ -156,6 +172,29 @@ void Value::set_boolean(bool val)
   attr_type_         = AttrType::BOOLEANS;
   value_.bool_value_ = val;
   length_            = sizeof(val);
+}
+
+void Value::set_vector(const char *s)
+{
+  std::stringstream ss(s);
+  std::string        item;
+  std::vector<float> vec;
+  while (std::getline(ss, item, ',')) {
+    vec.emplace_back(std::stof(item));
+  }
+  set_vector(vec);
+}
+
+void Value::set_vector(std::vector<float> vec)
+{ 
+  reset();
+  own_data_ = true;
+  value_.vector_value_ = new float[vec.size()];
+  for (int i = 0; i < vec.size(); i++) {
+    value_.vector_value_[i] = vec[i];
+  }
+  length_ = vec.size() * sizeof(float);
+  attr_type_ = AttrType::VECTORS;
 }
 
 void Value::set_string(const char *s, int len /*= 0*/)
@@ -194,6 +233,9 @@ void Value::set_value(const Value &value)
     case AttrType::BOOLEANS: {
       set_boolean(value.get_boolean());
     } break;
+    case AttrType::VECTORS: {
+      set_vector(value.get_vector());
+    } break;
     default: {
       ASSERT(false, "got an invalid value type");
     } break;
@@ -216,6 +258,9 @@ const char *Value::data() const
     case AttrType::CHARS: {
       return value_.pointer_value_;
     } break;
+    case AttrType::VECTORS: {
+      return (const char *)value_.vector_value_;
+    }
     default: {
       return (const char *)&value_;
     } break;
@@ -233,7 +278,10 @@ string Value::to_string() const
   return res;
 }
 
-int Value::compare(const Value &other) const { return DataType::type_instance(this->attr_type_)->compare(*this, other); }
+int Value::compare(const Value &other) const
+{
+  return DataType::type_instance(this->attr_type_)->compare(*this, other);
+}
 
 int Value::get_int() const
 {
@@ -292,6 +340,15 @@ float Value::get_float() const
 }
 
 string Value::get_string() const { return this->to_string(); }
+
+std::vector<float> Value::get_vector() const
+{ 
+  std::vector<float> res;
+  for (int i = 0; i < length_ / sizeof(float); i++) {
+    res.push_back(value_.vector_value_[i]);
+  }
+  return res;
+}
 
 bool Value::get_boolean() const
 {

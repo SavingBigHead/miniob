@@ -18,6 +18,8 @@ See the Mulan PSL v2 for more details. */
 #include "common/lang/memory.h"
 #include "common/type/attr_type.h"
 #include "common/type/data_type.h"
+#include <sstream>
+#include <vector>
 
 /**
  * @brief 属性的值
@@ -47,6 +49,7 @@ public:
   explicit Value(float val);
   explicit Value(bool val);
   explicit Value(const char *s, int len = 0);
+  explicit Value(const char *s, AttrType type);
 
   Value(const Value &other);
   Value(Value &&other);
@@ -97,6 +100,8 @@ public:
   }
   void set_int(int val);
   void set_float(float val);
+  void set_vector(const char *s);
+  void set_vector(std::vector<float> vec);
 
   string to_string() const;
 
@@ -116,6 +121,7 @@ public:
   float  get_float() const;
   string get_string() const;
   bool   get_boolean() const;
+  std::vector<float> get_vector() const;
 
 private:
   void set_string(const char *s, int len = 0);
@@ -131,6 +137,7 @@ private:
     float   float_value_;
     bool    bool_value_;
     char   *pointer_value_;
+    float  *vector_value_;
   } value_ = {.int_value_ = 0};
 
   /// 是否申请并占有内存, 目前对于 CHARS 类型 own_data_ 为true, 其余类型 own_data_ 为false
