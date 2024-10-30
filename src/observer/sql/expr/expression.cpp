@@ -158,8 +158,8 @@ RC ComparisonExpr::compare_value(const Value &left, const Value &right, bool &re
 {
   RC  rc         = RC::SUCCESS;
 
-  if (comp_ == LIKE_OP ) {
-    ASSERT(left.attr_type() == AttrType::CHARS || right.attr_type() == AttrType::CHARS, "LIKE_OP lhs or rhs NOT STRING!");
+  if (comp_ == LIKE_OP|| comp_ == NOT_LIKE_OP ) {
+    ASSERT(left.attr_type() == AttrType::CHARS || right.attr_type() == AttrType::CHARS, "[NOT_]LIKE_OP lhs or rhs NOT STRING!");
     result = comp_ == LIKE_OP ? str_like(left, right) : !str_like(left, right);
     return rc;
   }
