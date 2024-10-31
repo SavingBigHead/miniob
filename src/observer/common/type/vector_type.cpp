@@ -23,7 +23,8 @@ RC VectorType::add(const Value &left, const Value &right, Value &result) const
   std::vector<float> right_vec = right.get_vector();
   std::vector<float> result_vec;
   for (int i = 0; i < left_vec.size(); i++) {
-    result_vec.push_back(left_vec[i] + right_vec[i]);
+    float v = left_vec[i] + right_vec[i];
+    result_vec.push_back(std::round(v * 100) / 100);
   }
   result.set_vector(result_vec);
   return RC::SUCCESS;
@@ -34,7 +35,8 @@ RC VectorType::subtract(const Value &left, const Value &right, Value &result) co
   std::vector<float> right_vec = right.get_vector();
   std::vector<float> result_vec;
   for (int i = 0; i < left_vec.size(); i++) {
-    result_vec.push_back(left_vec[i] - right_vec[i]);
+    float v = left_vec[i] - right_vec[i];
+    result_vec.push_back(std::round(v * 100) / 100);
   }
   result.set_vector(result_vec);
   return RC::SUCCESS;
@@ -45,7 +47,8 @@ RC VectorType::multiply(const Value &left, const Value &right, Value &result) co
   std::vector<float> right_vec = right.get_vector();
   std::vector<float> result_vec;
   for (int i = 0; i < left_vec.size(); i++) {
-    result_vec.push_back(left_vec[i] * right_vec[i]);
+    float v = left_vec[i] * right_vec[i];
+    result_vec.push_back(std::round(v * 100) / 100);
   }
   result.set_vector(result_vec);
   return RC::SUCCESS;
