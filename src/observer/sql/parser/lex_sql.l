@@ -151,7 +151,7 @@ INNER_PRODUCT                           RETURN_TOKEN(INNER_PRODUCT);
 "*" |
 "/"                                     { return yytext[0]; }
 
-{QUOTE}?\[[0-9]+(\.[0-9]+)?(,[0-9]+(\.[0-9]+)?)*\]{QUOTE}?  yylval->string = strdup(yytext); RETURN_TOKEN(VEC_STR);
+{QUOTE}?\[\s*[0-9]+(\.[0-9]+)?[ \t]*(,[ \t]*[0-9]+(\.[0-9]+)?[ \t]*)*\]{QUOTE}?  yylval->string = strdup(yytext); RETURN_TOKEN(VEC_STR);
 
 \"[^"]*\"                               yylval->string = strdup(yytext); RETURN_TOKEN(SSS);
 '[^']*\'                                yylval->string = strdup(yytext); RETURN_TOKEN(SSS);
