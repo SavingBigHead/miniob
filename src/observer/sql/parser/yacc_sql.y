@@ -438,7 +438,12 @@ value:
       @$ = @2;
     }
     | VEC_STR {
-      char *tmp = common::substr($1, 2, strlen($1) -3);
+      char *tmp = $1;
+      if (tmp[0] == '\'' || tmp[0] == '\"') {
+        tmp = common::substr(tmp, 2, strlen(tmp) - 3);
+      } else {
+        tmp = common::substr(tmp, 1, strlen(tmp) - 2);
+      }
       $$ = new Value(tmp, AttrType::VECTORS);
       free(tmp);
       free($1);
