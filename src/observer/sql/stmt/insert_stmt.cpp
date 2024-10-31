@@ -14,6 +14,7 @@ See the Mulan PSL v2 for more details. */
 
 #include "sql/stmt/insert_stmt.h"
 #include "common/log/log.h"
+#include "common/type/attr_type.h"
 #include "storage/db/db.h"
 #include "storage/table/table.h"
 
@@ -42,6 +43,16 @@ RC InsertStmt::create(Db *db, const InsertSqlNode &inserts, Stmt *&stmt)
   const int        value_num  = static_cast<int>(inserts.values.size());
   const TableMeta &table_meta = table->table_meta();
   const int        field_num  = table_meta.field_num() - table_meta.sys_field_num();
+
+  // 如果有向量类型字段，需要检查向量长度是否一致
+  for (int i = 0; i < value_num; ++i) {
+    if (values[i].attr_type() == AttrType::VECTORS) {
+      if (table->table_meta().field(i)->len() != values[i].length()) {
+        return RC::INVALID_ARGUMENT;
+      }
+    }
+  }
+
   if (field_num != value_num) {
     LOG_WARN("schema mismatch. value num=%d, field num in schema=%d", value_num, field_num);
     return RC::SCHEMA_FIELD_MISSING;

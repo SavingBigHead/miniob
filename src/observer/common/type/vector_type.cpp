@@ -59,7 +59,7 @@ RC VectorType::to_string(const Value &val, string &result) const
   for (int i = 0; i < vec.size(); i++) {
     oss << vec[i];
     if (i < vec.size() - 1) {
-      oss << ", ";
+      oss << ",";
     }
   }
   oss << "]";
