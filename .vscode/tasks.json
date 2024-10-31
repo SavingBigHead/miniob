@@ -20,7 +20,25 @@
             "dependsOn": [
                 "cmake",
                 "make"
-            ]
+            ],
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "gen_parser",
+            "type": "shell",
+            "command": "cd ${workspaceFolder}/src/observer/sql/parser && bash gen_parser.sh",
+            "problemMatcher": [],
+            "presentation": {
+                "focus": true
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
         }
     ],
     "version": "2.0.0"
