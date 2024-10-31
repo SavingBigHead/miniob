@@ -95,6 +95,12 @@ public:
 
   virtual RC set_value_from_str(Value &val, const string &data) const { return RC::UNSUPPORTED; }
 
+  virtual RC l2_distance(const Value &left, const Value &right, Value &result) const { return RC::UNSUPPORTED; }
+
+  virtual RC cosine_distance(const Value &left, const Value &right, Value &result) const { return RC::UNSUPPORTED; }
+
+  virtual RC inner_product(const Value &left, const Value &right, Value &result) const { return RC::UNSUPPORTED; }
+
 protected:
   AttrType attr_type_;
 

@@ -47,6 +47,7 @@ enum class ExprType
   CONJUNCTION,  ///< 多个表达式使用同一种关系(AND或OR)来联结
   ARITHMETIC,   ///< 算术运算
   AGGREGATION,  ///< 聚合运算
+  DISTANCE,     ///< 距离计算
 };
 
 /**
@@ -467,4 +468,36 @@ public:
 private:
   Type                        aggregate_type_;
   std::unique_ptr<Expression> child_;
+};
+
+class DistanceExpr : public Expression
+{
+public:
+
+  enum class Type
+  {
+    L2_DISTANCE,
+    COSINE_DISTANCE,
+    INNER_PRODUCT,
+  };
+  DistanceExpr(Type type, Expression *left, Expression *right);
+  DistanceExpr(Type type,std::unique_ptr<Expression> left, std::unique_ptr<Expression> right);
+  virtual ~DistanceExpr() = default;
+
+  ExprType type() const override { return ExprType::DISTANCE; }
+
+  RC get_distance(const Value &left, const Value &right,Value &distance) const;
+  RC get_value(const Tuple &tuple, Value &value) const override;
+
+  AttrType value_type() const override { return AttrType::FLOATS; }
+
+  std::unique_ptr<Expression> &left() { return left_; }
+  std::unique_ptr<Expression> &right() { return right_; }
+
+  Type distance_type() const { return distance_type_; }
+
+private:
+  std::unique_ptr<Expression> left_;
+  std::unique_ptr<Expression> right_;
+  Type distance_type_;
 };

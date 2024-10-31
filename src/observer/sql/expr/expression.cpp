@@ -14,6 +14,7 @@ See the Mulan PSL v2 for more details. */
 
 #include "sql/expr/expression.h"
 #include "common/type/attr_type.h"
+#include "common/type/vector_type.h"
 #include "sql/expr/tuple.h"
 #include "sql/expr/arithmetic_operator.hpp"
 #include <limits>
@@ -639,4 +640,54 @@ RC AggregateExpr::type_from_string(const char *type_str, AggregateExpr::Type &ty
     rc = RC::INVALID_ARGUMENT;
   }
   return rc;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+DistanceExpr::DistanceExpr(Type type, Expression *left, Expression *right)
+    : left_(left), right_(right), distance_type_(type)
+{}
+
+DistanceExpr::DistanceExpr(Type type, std::unique_ptr<Expression> left, std::unique_ptr<Expression> right)
+    : left_(std::move(left)), right_(std::move(right)), distance_type_(type)
+{}
+
+RC DistanceExpr::get_distance(const Value &left, const Value &right, Value &distance) const
+{
+  RC rc = RC::SUCCESS;
+
+  switch (distance_type_) {
+    case Type::L2_DISTANCE: rc = Value::l2_distance(left, right, distance); break;
+    case Type::COSINE_DISTANCE: rc = Value::cosine_distance(left, right, distance); break;
+    case Type::INNER_PRODUCT: rc = Value::inner_product(left, right, distance); break;
+    default: {
+      rc = RC::INVALID_ARGUMENT;
+      LOG_WARN("unsupported distance type. %d", distance_type_);
+    }
+  }
+
+  return rc;
+}
+
+RC DistanceExpr::get_value(const Tuple &tuple, Value &value) const
+{
+  {
+    RC rc = RC::SUCCESS;
+
+    Value left_value;
+    Value right_value;
+
+    rc = left_->get_value(tuple, left_value);
+    if (rc != RC::SUCCESS) {
+      LOG_WARN("failed to get value of left expression. rc=%s", strrc(rc));
+      return rc;
+    }
+
+    rc = right_->get_value(tuple, right_value);
+    if (rc != RC::SUCCESS) {
+      LOG_WARN("failed to get value of right expression. rc=%s", strrc(rc));
+      return rc;
+    }
+    return get_distance(left_value, right_value, value);
+  }
 }

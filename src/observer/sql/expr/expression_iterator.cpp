@@ -63,6 +63,11 @@ RC ExpressionIterator::iterate_child_expr(Expression &expr, function<RC(unique_p
       rc = callback(aggregate_expr.child());
     } break;
 
+    case ExprType::DISTANCE: {
+      auto &distance_expr = static_cast<DistanceExpr &>(expr);
+      rc = callback(distance_expr.left());
+    } break;
+
     case ExprType::NONE:
     case ExprType::STAR:
     case ExprType::UNBOUND_FIELD:

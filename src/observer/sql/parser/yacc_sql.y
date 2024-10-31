@@ -51,6 +51,17 @@ UnboundAggregateExpr *create_aggregate_expression(const char *aggregate_name,
   return expr;
 }
 
+DistanceExpr *create_distance_expression(DistanceExpr::Type type,
+                                         Expression *left,
+                                         Expression *right,
+                                         const char *sql_string,
+                                         YYLTYPE *llocp)
+{
+  DistanceExpr *expr = new DistanceExpr(type, left, right);
+  expr->set_name(token_name(sql_string, llocp));
+  return expr;
+}
+
 %}
 
 %define api.pure full
@@ -561,6 +572,15 @@ expression:
     }
     | MIN LBRACE expression RBRACE {
       $$ = create_aggregate_expression("MIN", $3, sql_string, &@$);
+    }
+    | L2_DISTANCE LBRACE expression COMMA expression RBRACE {
+      $$ = create_distance_expression(DistanceExpr::Type::L2_DISTANCE, $3, $5, sql_string, &@$);
+    }
+    | COSINE_DISTANCE LBRACE expression COMMA expression RBRACE {
+      $$ = create_distance_expression(DistanceExpr::Type::COSINE_DISTANCE, $3, $5, sql_string, &@$);
+    }
+    | INNER_PRODUCT LBRACE expression COMMA expression RBRACE {
+      $$ = create_distance_expression(DistanceExpr::Type::INNER_PRODUCT, $3, $5, sql_string, &@$);
     }
     | value {
       $$ = new ValueExpr(*$1);
