@@ -102,6 +102,7 @@ DistanceExpr *create_distance_expression(DistanceExpr::Type type,
         DATE_T
         FLOAT_T
         VECTOR_T
+        NULL_T
         HELP
         EXIT
         DOT //QUOTE
@@ -153,6 +154,7 @@ DistanceExpr *create_distance_expression(DistanceExpr::Type type,
   char *                                     string;
   int                                        number;
   float                                      floats;
+  bool                                       boolean;
 }
 
 %token <number> NUMBER
@@ -201,6 +203,7 @@ DistanceExpr *create_distance_expression(DistanceExpr::Type type,
 %type <sql_node>            help_stmt
 %type <sql_node>            exit_stmt
 %type <sql_node>            command_wrapper
+%type <boolean>             null_option
 // commands should be a list but I use a single command instead
 %type <sql_node>            commands
 
@@ -360,7 +363,7 @@ attr_def_list:
     ;
     
 attr_def:
-    ID type LBRACE number RBRACE 
+    ID type LBRACE number RBRACE null_option
     {
       $$ = new AttrInfoSqlNode;
       $$->type = (AttrType)$2;
@@ -370,15 +373,29 @@ attr_def:
       } else {
         $$->length = $4;
       }
+      $$->allow_null = $6;
       free($1);
     }
-    | ID type
+    | ID type null_option
     {
       $$ = new AttrInfoSqlNode;
       $$->type = (AttrType)$2;
       $$->name = $1;
       $$->length = 4;
+      $$->allow_null = $3;
       free($1);
+    }
+    ;
+null_option: 
+    /* empty */
+    {
+      $$ = false;
+    }
+    | NOT NULL_T {
+      $$ = false;
+    }
+    | NULL_T {
+      $$ = true;
     }
     ;
 number:

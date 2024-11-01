@@ -55,77 +55,82 @@ Table::~Table()
 RC Table::create(Db *db, int32_t table_id, const char *path, const char *name, const char *base_dir,
     span<const AttrInfoSqlNode> attributes, StorageFormat storage_format)
 {
+  // 检查表 ID 是否有效
   if (table_id < 0) {
     LOG_WARN("invalid table id. table_id=%d, table_name=%s", table_id, name);
-    return RC::INVALID_ARGUMENT;
+    return RC::INVALID_ARGUMENT; // 返回无效参数错误
   }
 
+  // 检查表名是否为空
   if (common::is_blank(name)) {
     LOG_WARN("Name cannot be empty");
-    return RC::INVALID_ARGUMENT;
+    return RC::INVALID_ARGUMENT; // 返回无效参数错误
   }
   LOG_INFO("Begin to create table %s:%s", base_dir, name);
 
+  // 检查属性的数量是否为 0
   if (attributes.size() == 0) {
     LOG_WARN("Invalid arguments. table_name=%s, attribute_count=%d", name, attributes.size());
-    return RC::INVALID_ARGUMENT;
+    return RC::INVALID_ARGUMENT; // 返回无效参数错误
   }
 
-  RC rc = RC::SUCCESS;
+  RC rc = RC::SUCCESS; // 初始化返回代码为成功
 
-  // 使用 table_name.table记录一个表的元数据
+  // 使用 table_name.table 记录一个表的元数据
   // 判断表文件是否已经存在
-  int fd = ::open(path, O_WRONLY | O_CREAT | O_EXCL | O_CLOEXEC, 0600);
+  int fd = ::open(path, O_WRONLY | O_CREAT | O_EXCL | O_CLOEXEC, 0600); // 尝试以创建方式打开文件
   if (fd < 0) {
-    if (EEXIST == errno) {
+    if (EEXIST == errno) { // 如果文件已存在
       LOG_ERROR("Failed to create table file, it has been created. %s, EEXIST, %s", path, strerror(errno));
-      return RC::SCHEMA_TABLE_EXIST;
+      return RC::SCHEMA_TABLE_EXIST; // 返回表已存在错误
     }
     LOG_ERROR("Create table file failed. filename=%s, errmsg=%d:%s", path, errno, strerror(errno));
-    return RC::IOERR_OPEN;
+    return RC::IOERR_OPEN; // 返回打开文件错误
   }
 
-  close(fd);
+  close(fd); // 关闭文件描述符
 
   // 创建文件
-  const vector<FieldMeta> *trx_fields = db->trx_kit().trx_fields();
+  const vector<FieldMeta> *trx_fields = db->trx_kit().trx_fields(); // 获取事务字段信息
+  // 初始化表的元数据
   if ((rc = table_meta_.init(table_id, name, trx_fields, attributes, storage_format)) != RC::SUCCESS) {
     LOG_ERROR("Failed to init table meta. name:%s, ret:%d", name, rc);
-    return rc;  // delete table file
+    return rc;  // 如果初始化失败，返回相应错误（同时可能需要删除表文件）
   }
 
-  fstream fs;
-  fs.open(path, ios_base::out | ios_base::binary);
-  if (!fs.is_open()) {
+  fstream fs; // 创建文件流对象
+  fs.open(path, ios_base::out | ios_base::binary); // 以二进制写入方式打开文件
+  if (!fs.is_open()) { // 检查文件是否成功打开
     LOG_ERROR("Failed to open file for write. file name=%s, errmsg=%s", path, strerror(errno));
-    return RC::IOERR_OPEN;
+    return RC::IOERR_OPEN; // 返回打开文件错误
   }
 
   // 记录元数据到文件中
-  table_meta_.serialize(fs);
-  fs.close();
+  table_meta_.serialize(fs); // 序列化表元数据到文件
+  fs.close(); // 关闭文件流
 
-  db_       = db;
-  base_dir_ = base_dir;
+  db_       = db; // 保存数据库对象
+  base_dir_ = base_dir; // 保存基本目录
 
-  string             data_file = table_data_file(base_dir, name);
-  BufferPoolManager &bpm       = db->buffer_pool_manager();
-  rc                           = bpm.create_file(data_file.c_str());
-  if (rc != RC::SUCCESS) {
+  string data_file = table_data_file(base_dir, name); // 生成数据文件路径
+  BufferPoolManager &bpm = db->buffer_pool_manager(); // 获取缓冲池管理器
+  rc = bpm.create_file(data_file.c_str()); // 创建磁盘缓冲池数据文件
+  if (rc != RC::SUCCESS) { // 检查创建是否成功
     LOG_ERROR("Failed to create disk buffer pool of data file. file name=%s", data_file.c_str());
-    return rc;
+    return rc; // 返回相应错误
   }
 
-  rc = init_record_handler(base_dir);
-  if (rc != RC::SUCCESS) {
+  rc = init_record_handler(base_dir); // 初始化记录处理器
+  if (rc != RC::SUCCESS) { // 检查初始化是否成功
     LOG_ERROR("Failed to create table %s due to init record handler failed.", data_file.c_str());
-    // don't need to remove the data_file
-    return rc;
+    // 不需要删除数据文件
+    return rc; // 返回相应错误
   }
 
-  LOG_INFO("Successfully create table %s:%s", base_dir, name);
-  return rc;
+  LOG_INFO("Successfully create table %s:%s", base_dir, name); // 记录成功日志
+  return rc; // 返回成功状态
 }
+
 
 //new
 RC Table::drop(const char *path){

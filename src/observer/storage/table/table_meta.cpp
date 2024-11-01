@@ -46,57 +46,65 @@ void TableMeta::swap(TableMeta &other) noexcept
 RC TableMeta::init(int32_t table_id, const char *name, const std::vector<FieldMeta> *trx_fields,
                    span<const AttrInfoSqlNode> attributes, StorageFormat storage_format)
 {
+  // 检查名称是否为空
   if (common::is_blank(name)) {
     LOG_ERROR("Name cannot be empty");
-    return RC::INVALID_ARGUMENT;
+    return RC::INVALID_ARGUMENT; // 返回无效参数错误
   }
 
+  // 检查属性列表是否为空
   if (attributes.size() == 0) {
     LOG_ERROR("Invalid argument. name=%s, field_num=%d", name, attributes.size());
-    return RC::INVALID_ARGUMENT;
+    return RC::INVALID_ARGUMENT; // 返回无效参数错误
   }
 
-  RC rc = RC::SUCCESS;
+  RC rc = RC::SUCCESS; // 初始化返回码为成功
 
-  int field_offset  = 0;
-  int trx_field_num = 0;
+  int field_offset  = 0; // 字段偏移量初始化为0
+  int trx_field_num = 0; // 事务字段数量初始化为0
 
+  // 如果事务字段不为空，则进行处理
   if (trx_fields != nullptr) {
-    trx_fields_ = *trx_fields;
+    trx_fields_ = *trx_fields; // 复制事务字段信息
 
+    // 调整字段数组的大小以包含所有事务字段
     fields_.resize(attributes.size() + trx_fields->size());
     for (size_t i = 0; i < trx_fields->size(); i++) {
-      const FieldMeta &field_meta = (*trx_fields)[i];
-      fields_[i] = FieldMeta(field_meta.name(), field_meta.type(), field_offset, field_meta.len(), false /*visible*/, field_meta.field_id());
-      field_offset += field_meta.len();
+      const FieldMeta &field_meta = (*trx_fields)[i]; // 获取当前字段元信息
+      // 初始化字段信息并设置不可见属性
+      fields_[i] = FieldMeta(field_meta.name(), field_meta.type(), field_offset, field_meta.len(), false /*visible*/, field_meta.field_id(), field_meta.allow_null());
+      field_offset += field_meta.len(); // 更新字段偏移量
     }
 
-    trx_field_num = static_cast<int>(trx_fields->size());
+    trx_field_num = static_cast<int>(trx_fields->size()); // 更新事务字段数量
   } else {
+    // 如果没有事务字段，仅根据属性调整字段数组的大小
     fields_.resize(attributes.size());
   }
 
+  // 遍历所有属性并初始化字段
   for (size_t i = 0; i < attributes.size(); i++) {
-    const AttrInfoSqlNode &attr_info = attributes[i];
-    // `i` is the col_id of fields[i]
+    const AttrInfoSqlNode &attr_info = attributes[i]; // 获取当前属性信息
+    // `i` 是字段的 col_id
     rc = fields_[i + trx_field_num].init(
-      attr_info.name.c_str(), attr_info.type, field_offset, attr_info.length, true /*visible*/, i);
+      attr_info.name.c_str(), attr_info.type, field_offset, attr_info.length, true /*visible*/, i, attr_info.allow_null); // 初始化字段元数据
     if (OB_FAIL(rc)) {
       LOG_ERROR("Failed to init field meta. table name=%s, field name: %s", name, attr_info.name.c_str());
-      return rc;
+      return rc; // 如果初始化失败，返回错误码
     }
 
-    field_offset += attr_info.length;
+    field_offset += attr_info.length; // 更新字段偏移量
   }
 
-  record_size_ = field_offset;
+  record_size_ = field_offset; // 设置记录大小为字段总大小
 
-  table_id_ = table_id;
-  name_     = name;
-  storage_format_ = storage_format;
-  LOG_INFO("Sussessfully initialized table meta. table id=%d, name=%s", table_id, name);
-  return RC::SUCCESS;
+  table_id_ = table_id; // 设置表ID
+  name_     = name; // 设置表名称
+  storage_format_ = storage_format; // 设置存储格式
+  LOG_INFO("Sussessfully initialized table meta. table id=%d, name=%s", table_id, name); // 记录初始化成功日志
+  return RC::SUCCESS; // 返回成功
 }
+
 
 RC TableMeta::add_index(const IndexMeta &index)
 {
