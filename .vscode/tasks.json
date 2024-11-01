@@ -39,6 +39,14 @@
                 "kind": "build",
                 "isDefault": true
             }
+        },
+        {
+            "label": "preLaunchCompoundTask",
+            "dependsOn": [
+                "gen_parser",
+                "CMake Build",
+            ],
+            "dependsOrder": "sequence"
         }
     ],
     "version": "2.0.0"
