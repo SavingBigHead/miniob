@@ -111,12 +111,6 @@ void Value::reset()
         value_.pointer_value_ = nullptr;
       }
       break;
-    case AttrType::VECTORS:
-      if (own_data_ && value_.vector_value_ != nullptr) {
-        delete[] value_.vector_value_;
-        value_.vector_value_ = nullptr;
-      }
-      break;
     default: break;
   }
 
