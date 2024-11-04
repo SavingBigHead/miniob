@@ -20,6 +20,7 @@ See the Mulan PSL v2 for more details. */
 #include "sql/expr/tuple.h"
 #include <regex>
 #include <string>
+#include "sql/parser/parse_defs.h"
 #include "sql/stmt/select_stmt.h"
 #include "sql/operator/physical_operator.h"
 #include <limits>
@@ -150,6 +151,14 @@ ComparisonExpr::~ComparisonExpr() {}
 RC ComparisonExpr::compare_value(const Value &left, const Value &right, bool &result) const
 {
   RC rc = RC::SUCCESS;
+
+  if (comp_ == IS_OP) {
+    result = left.attr_type() == right.attr_type();
+    return rc;
+  } else if (comp_ == IS_NOT_OP) {
+    result = left.attr_type() != right.attr_type();
+    return rc;
+  }
 
   if (left.is_null() || right.is_null()) {
     result = false;

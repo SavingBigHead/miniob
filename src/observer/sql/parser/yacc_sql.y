@@ -133,6 +133,7 @@ DistanceExpr *create_distance_expression(DistanceExpr::Type type,
         LE
         GE
         NE
+        IS
         LIKE
         NOT
 
@@ -712,6 +713,8 @@ comp_op:
     | NE { $$ = NOT_EQUAL; }
     | LIKE { $$ = LIKE_OP;}
     | NOT LIKE {$$ = NOT_LIKE_OP;}
+    | IS { $$ = IS_OP;}
+    | IS NOT { $$ = IS_NOT_OP;}
     ;
 
 // your code here
