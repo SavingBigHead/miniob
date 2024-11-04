@@ -13,6 +13,7 @@ See the Mulan PSL v2 for more details. */
 //
 
 #include "storage/trx/vacuous_trx.h"
+#include "common/lang/bitmap.h"
 #include "common/type/attr_type.h"
 
 RC VacuousTrxKit::init() { return RC::SUCCESS; }
@@ -69,6 +70,11 @@ RC VacuousTrx::update_record(Table *table, const std::string &field_name, const 
 
     // 复制原始记录数据
     memcpy(new_data, record.data(), record_size);
+
+    common::Bitmap null_bitmap(new_data + table->table_meta().field(0)->offset(), table->table_meta().field(0)->len());
+    if (new_value.is_null()) {
+        null_bitmap.set_bit(field_meta->field_id() + table->table_meta().sys_field_num());
+    }
 
     // 根据字段类型处理更新
     switch (field_meta->type()) {

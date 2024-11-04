@@ -18,6 +18,7 @@ See the Mulan PSL v2 for more details. */
 #include "common/lang/memory.h"
 #include "common/type/attr_type.h"
 #include "common/type/data_type.h"
+#include "common/type/null_type.h"
 #include <sstream>
 #include <vector>
 
@@ -38,6 +39,7 @@ public:
   friend class CharType;
   friend class VectorType;
   friend class DateType;
+  friend class NullType;
 
   Value() = default;
 
@@ -117,6 +119,7 @@ public:
   void set_float(float val);
   void set_vector(const char *s);
   void set_vector(std::vector<float> vec);
+  void set_null();
 
   string to_string() const;
 
@@ -137,6 +140,7 @@ public:
   string get_string() const;
   bool   get_boolean() const;
   std::vector<float> get_vector() const;
+  bool is_null() const { return attr_type_ == AttrType::NULLS; }
 
 private:
   void set_string(const char *s, int len = 0);

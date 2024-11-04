@@ -225,6 +225,11 @@ RC MvccTrx::update_record(Table *table, const std::string &field_name, const Val
     // 复制原始记录数据
     memcpy(new_data, record.data(), record_size);
 
+    common::Bitmap null_bitmap(new_data + table->table_meta().field(0)->offset(), table->table_meta().field(0)->len());
+    if (new_value.is_null()) {
+        null_bitmap.set_bit(field_meta->field_id() + table->table_meta().sys_field_num());
+    }
+
     // 根据字段类型处理更新
     switch (field_meta->type()) {
         case AttrType::CHARS: { // 定长字符串类型

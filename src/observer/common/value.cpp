@@ -111,6 +111,12 @@ void Value::reset()
         value_.pointer_value_ = nullptr;
       }
       break;
+    case AttrType::VECTORS:
+      if (own_data_ && value_.vector_value_ != nullptr) {
+        delete[] value_.vector_value_;
+        value_.vector_value_ = nullptr;
+      }
+      break;
     default: break;
   }
 
@@ -145,6 +151,9 @@ void Value::set_data(char *data, int length)
       value_.vector_value_ = (float *)data;
       length_             = length;
     } break;
+    case AttrType::NULLS: {
+      // do nothing
+    } break;
     default: {
       LOG_WARN("unknown data type: %d", attr_type_);
     } break;
@@ -172,6 +181,11 @@ void Value::set_boolean(bool val)
   attr_type_         = AttrType::BOOLEANS;
   value_.bool_value_ = val;
   length_            = sizeof(val);
+}
+void Value::set_null()
+{
+  reset();
+  attr_type_ = AttrType::NULLS;
 }
 
 void Value::set_vector(const char *s)

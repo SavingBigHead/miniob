@@ -13,10 +13,12 @@ See the Mulan PSL v2 for more details. */
 //
 
 #include "sql/stmt/insert_stmt.h"
+#include "common/lang/bitmap.h"
 #include "common/log/log.h"
 #include "common/type/attr_type.h"
 #include "storage/db/db.h"
 #include "storage/table/table.h"
+#include <cstdlib>
 
 InsertStmt::InsertStmt(Table *table, const Value *values, int value_amount)
     : table_(table), values_(values), value_amount_(value_amount)
@@ -44,10 +46,19 @@ RC InsertStmt::create(Db *db, const InsertSqlNode &inserts, Stmt *&stmt)
   const TableMeta &table_meta = table->table_meta();
   const int        field_num  = table_meta.field_num() - table_meta.sys_field_num();
 
-  // 如果有向量类型字段，需要检查向量长度是否一致
   for (int i = 0; i < value_num; ++i) {
+    // 如果有向量类型字段，需要检查向量长度是否一致
     if (values[i].attr_type() == AttrType::VECTORS) {
-      if (table->table_meta().field(i)->len() != values[i].length()) {
+      if (table_meta.field(i + table_meta.sys_field_num())->len() != values[i].length()) {
+        LOG_WARN("vector length mismatch. fieldname=%s, fieldlen=%d, value_len=%d"
+        , table->table_meta().field(i)->name(), table_meta.field(i + table_meta.sys_field_num())->len(), values[i].length());
+        return RC::INVALID_ARGUMENT;
+      }
+    } 
+    if (values[i].attr_type() == AttrType::NULLS) {
+      // 如果有NULL类型字段，需要检查是否允许为NULL
+      if (table_meta.field(i + table_meta.sys_field_num())->allow_null() == false) {
+        LOG_WARN("field %s not allow null", table_meta.field(i + table_meta.sys_field_num())->name());
         return RC::INVALID_ARGUMENT;
       }
     }

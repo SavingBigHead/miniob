@@ -17,6 +17,8 @@ See the Mulan PSL v2 for more details. */
 #include "common/log/log.h"
 #include "common/global_context.h"
 #include "storage/table/table_meta.h"
+#include "common/type/attr_type.h"
+#include "storage/field/field_meta.h"
 #include "storage/trx/trx.h"
 #include "json/json.h"
 
@@ -44,67 +46,88 @@ void TableMeta::swap(TableMeta &other) noexcept
 }
 
 RC TableMeta::init(int32_t table_id, const char *name, const std::vector<FieldMeta> *trx_fields,
-                   span<const AttrInfoSqlNode> attributes, StorageFormat storage_format)
+    span<const AttrInfoSqlNode> attributes, StorageFormat storage_format)
 {
   // 检查名称是否为空
   if (common::is_blank(name)) {
     LOG_ERROR("Name cannot be empty");
-    return RC::INVALID_ARGUMENT; // 返回无效参数错误
+    return RC::INVALID_ARGUMENT;  // 返回无效参数错误
   }
 
   // 检查属性列表是否为空
   if (attributes.size() == 0) {
     LOG_ERROR("Invalid argument. name=%s, field_num=%d", name, attributes.size());
-    return RC::INVALID_ARGUMENT; // 返回无效参数错误
+    return RC::INVALID_ARGUMENT;  // 返回无效参数错误
   }
 
-  RC rc = RC::SUCCESS; // 初始化返回码为成功
+  RC rc = RC::SUCCESS;  // 初始化返回码为成功
 
-  int field_offset  = 0; // 字段偏移量初始化为0
-  int trx_field_num = 0; // 事务字段数量初始化为0
+  int field_offset  = 0;  // 字段偏移量初始化为0
+  int trx_field_num = 0;  // 事务字段数量初始化为0
 
-  // 如果事务字段不为空，则进行处理
+  int field_size = 0;  // 字段大小初始化为0
+
   if (trx_fields != nullptr) {
-    trx_fields_ = *trx_fields; // 复制事务字段信息
-
-    // 调整字段数组的大小以包含所有事务字段
-    fields_.resize(attributes.size() + trx_fields->size());
-    for (size_t i = 0; i < trx_fields->size(); i++) {
-      const FieldMeta &field_meta = (*trx_fields)[i]; // 获取当前字段元信息
-      // 初始化字段信息并设置不可见属性
-      fields_[i] = FieldMeta(field_meta.name(), field_meta.type(), field_offset, field_meta.len(), false /*visible*/, field_meta.field_id(), field_meta.allow_null());
-      field_offset += field_meta.len(); // 更新字段偏移量
-    }
-
-    trx_field_num = static_cast<int>(trx_fields->size()); // 更新事务字段数量
+    field_size = attributes.size() + trx_fields->size() + 1;  // 计算字段总大小
   } else {
-    // 如果没有事务字段，仅根据属性调整字段数组的大小
-    fields_.resize(attributes.size());
+    field_size = attributes.size() + 1;  // 计算字段总大小
   }
+  fields_.resize(field_size);
+
+  std::vector<FieldMeta> trx_fields_with_null;
+  trx_fields_with_null.emplace_back("__null", AttrType::CHARS, 0, field_size, false, 0, false);
+  if (trx_fields != nullptr) {
+    for (auto field : *trx_fields) {
+      trx_fields_with_null.emplace_back(field);  // 复制事务字段信息
+    }
+  }
+  for (int i = 1; i < trx_fields_with_null.size(); i++) {
+    trx_fields_with_null[i].set_field_id(trx_fields_with_null[i].field_id() + 1);  // 设置字段ID
+  }
+  trx_fields_ = std::move(trx_fields_with_null);  // 复制事务字段信息
+
+  for (size_t i = 0; i < trx_fields_.size(); i++) {
+    const FieldMeta &field_meta = trx_fields_[i];  // 获取当前字段元信息
+    // 初始化字段信息并设置不可见属性
+    fields_[i] = FieldMeta(field_meta.name(),
+        field_meta.type(),
+        field_offset,
+        field_meta.len(),
+        false /*visible*/,
+        field_meta.field_id(),
+        field_meta.allow_null());
+    field_offset += field_meta.len();  // 更新字段偏移量
+  }
+
+  trx_field_num = static_cast<int>(trx_fields_.size());  // 更新事务字段数量
 
   // 遍历所有属性并初始化字段
   for (size_t i = 0; i < attributes.size(); i++) {
-    const AttrInfoSqlNode &attr_info = attributes[i]; // 获取当前属性信息
+    const AttrInfoSqlNode &attr_info = attributes[i];  // 获取当前属性信息
     // `i` 是字段的 col_id
-    rc = fields_[i + trx_field_num].init(
-      attr_info.name.c_str(), attr_info.type, field_offset, attr_info.length, true /*visible*/, i, attr_info.allow_null); // 初始化字段元数据
+    rc = fields_[i + trx_field_num].init(attr_info.name.c_str(),
+        attr_info.type,
+        field_offset,
+        attr_info.length,
+        attr_info.visible /*visible*/,
+        i,
+        attr_info.allow_null);  // 初始化字段元数据
     if (OB_FAIL(rc)) {
       LOG_ERROR("Failed to init field meta. table name=%s, field name: %s", name, attr_info.name.c_str());
-      return rc; // 如果初始化失败，返回错误码
+      return rc;  // 如果初始化失败，返回错误码
     }
 
-    field_offset += attr_info.length; // 更新字段偏移量
+    field_offset += attr_info.length;  // 更新字段偏移量
   }
 
-  record_size_ = field_offset; // 设置记录大小为字段总大小
+  record_size_ = field_offset;  // 设置记录大小为字段总大小
 
-  table_id_ = table_id; // 设置表ID
-  name_     = name; // 设置表名称
-  storage_format_ = storage_format; // 设置存储格式
-  LOG_INFO("Sussessfully initialized table meta. table id=%d, name=%s", table_id, name); // 记录初始化成功日志
-  return RC::SUCCESS; // 返回成功
+  table_id_       = table_id;                                                           // 设置表ID
+  name_           = name;                                                               // 设置表名称
+  storage_format_ = storage_format;                                                     // 设置存储格式
+  LOG_INFO("Sussessfully initialized table meta. table id=%d, name=%s", table_id, name);  // 记录初始化成功日志
+  return RC::SUCCESS;                                                                   // 返回成功
 }
-
 
 RC TableMeta::add_index(const IndexMeta &index)
 {
@@ -116,10 +139,7 @@ const char *TableMeta::name() const { return name_.c_str(); }
 
 const FieldMeta *TableMeta::trx_field() const { return &fields_[0]; }
 
-span<const FieldMeta> TableMeta::trx_fields() const
-{
-  return span<const FieldMeta>(fields_.data(), sys_field_num());
-}
+span<const FieldMeta> TableMeta::trx_fields() const { return span<const FieldMeta>(fields_.data(), sys_field_num()); }
 
 const FieldMeta *TableMeta::field(int index) const { return &fields_[index]; }
 const FieldMeta *TableMeta::field(const char *name) const
@@ -177,8 +197,8 @@ int TableMeta::record_size() const { return record_size_; }
 int TableMeta::serialize(std::ostream &ss) const
 {
   Json::Value table_value;
-  table_value[FIELD_TABLE_ID]   = table_id_;
-  table_value[FIELD_TABLE_NAME] = name_;
+  table_value[FIELD_TABLE_ID]       = table_id_;
+  table_value[FIELD_TABLE_NAME]     = name_;
   table_value[FIELD_STORAGE_FORMAT] = static_cast<int>(storage_format_);
 
   Json::Value fields_value;
@@ -269,7 +289,7 @@ int TableMeta::deserialize(std::istream &is)
   auto comparator = [](const FieldMeta &f1, const FieldMeta &f2) { return f1.offset() < f2.offset(); };
   std::sort(fields.begin(), fields.end(), comparator);
 
-  table_id_ = table_id;
+  table_id_       = table_id;
   storage_format_ = static_cast<StorageFormat>(storage_format);
   name_.swap(table_name);
   fields_.swap(fields);
@@ -277,7 +297,7 @@ int TableMeta::deserialize(std::istream &is)
 
   for (const FieldMeta &field_meta : fields_) {
     if (!field_meta.visible()) {
-      trx_fields_.push_back(field_meta); // 字段加上trx标识更好
+      trx_fields_.push_back(field_meta);  // 字段加上trx标识更好
     }
   }
 

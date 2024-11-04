@@ -43,6 +43,9 @@ public:
   bool        visible() const;
   int         field_id() const;
   bool        allow_null() const;
+  void set_field_id(int field_id) {
+    field_id_ = field_id;
+  }
 
 public:
   void desc(ostream &os) const;

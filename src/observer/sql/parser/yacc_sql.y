@@ -373,6 +373,7 @@ attr_def:
       } else {
         $$->length = $4;
       }
+      $$->visible = true;
       $$->allow_null = $6;
       free($1);
     }
@@ -382,6 +383,7 @@ attr_def:
       $$->type = (AttrType)$2;
       $$->name = $1;
       $$->length = 4;
+      $$->visible = true;
       $$->allow_null = $3;
       free($1);
     }
@@ -472,6 +474,11 @@ value:
       $$ = new Value(tmp);
       free(tmp);
       free($1);
+    }
+    | NULL_T {
+      $$ = new Value();
+      $$->set_null();
+      @$ = @1;
     }
     ;
 storage_format:

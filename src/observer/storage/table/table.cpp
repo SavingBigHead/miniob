@@ -16,15 +16,18 @@ See the Mulan PSL v2 for more details. */
 #include <string.h>
 
 #include "common/defs.h"
+#include "common/lang/bitmap.h"
 #include "common/lang/string.h"
 #include "common/lang/span.h"
 #include "common/lang/algorithm.h"
 #include "common/log/log.h"
 #include "common/global_context.h"
+#include "common/type/attr_type.h"
 #include "storage/db/db.h"
 #include "storage/buffer/disk_buffer_pool.h"
 #include "storage/common/condition_filter.h"
 #include "storage/common/meta_util.h"
+#include "storage/field/field_meta.h"
 #include "storage/index/bplus_tree_index.h"
 #include "storage/index/index.h"
 #include "storage/record/record_manager.h"
@@ -302,10 +305,17 @@ RC Table::make_record(int value_num, const Value *values, Record &record)
   char *record_data = (char *)malloc(record_size);
   memset(record_data, 0, record_size);
 
+  const FieldMeta *null_field = table_meta_.field(0);
+  common::Bitmap null_bitmap(record_data + null_field->offset(), table_meta_.field_num());
+
   for (int i = 0; i < value_num && OB_SUCC(rc); i++) {
     const FieldMeta *field = table_meta_.field(i + normal_field_start_index);
     const Value     &value = values[i];
-    if (field->type() != value.attr_type()) {
+
+    if (value.is_null()) {
+      null_bitmap.set_bit(normal_field_start_index + i);
+    }
+    if (field->type() != value.attr_type() && value.attr_type() != AttrType::NULLS) {
       Value real_value;
       rc = Value::cast_to(value, field->type(), real_value);
       if (OB_FAIL(rc)) {

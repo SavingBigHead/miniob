@@ -142,6 +142,7 @@ struct AttrInfoSqlNode
   AttrType    type;    ///< Type of attribute
   std::string name;    ///< Attribute name
   size_t      length;  ///< Length of attribute
+  bool        visible;  ///< Whether attribute is visible
   bool        allow_null;  ///< Whether attribute can be null
 };
 

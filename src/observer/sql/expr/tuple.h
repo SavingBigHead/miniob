@@ -18,11 +18,13 @@ See the Mulan PSL v2 for more details. */
 #include <string>
 #include <vector>
 
+#include "common/lang/bitmap.h"
 #include "common/log/log.h"
 #include "sql/expr/expression.h"
 #include "sql/expr/tuple_cell.h"
 #include "sql/parser/parse.h"
 #include "common/value.h"
+#include "storage/field/field_meta.h"
 #include "storage/record/record.h"
 
 class Table;
@@ -171,7 +173,11 @@ public:
     speces_.clear();
   }
 
-  void set_record(Record *record) { this->record_ = record; }
+  void set_record(Record *record) { 
+    this->record_ = record;
+    const FieldMeta *nullfield = this->speces_.front()->field().meta();
+    bitmap_ = new common::Bitmap(record->data() + nullfield->offset(), sizeof(int));
+  }
 
   void set_schema(const Table *table, const std::vector<FieldMeta> *fields)
   {
@@ -183,6 +189,12 @@ public:
     }
     this->speces_.clear();
     this->speces_.reserve(fields->size());
+
+    // const FieldMeta null_field = ((*fields)[fields->size() - 1]);
+    // bitmap_ = new common::Bitmap(record_->data() + null_field.offset(), null_field.len());
+    // std::vector<FieldMeta> *fields_whitout_null = const_cast<std::vector<FieldMeta>*>(fields);
+    // (*fields_whitout_null).pop_back();
+
     for (const FieldMeta &field : *fields) {
       speces_.push_back(new FieldExpr(table, &field));
     }
@@ -199,8 +211,12 @@ public:
 
     FieldExpr       *field_expr = speces_[index];
     const FieldMeta *field_meta = field_expr->field().meta();
-    cell.set_type(field_meta->type());
-    cell.set_data(this->record_->data() + field_meta->offset(), field_meta->len());
+    if (bitmap_->get_bit(index)) {
+      cell.set_null();
+    } else {
+      cell.set_type(field_meta->type());
+      cell.set_data(this->record_->data() + field_meta->offset(), field_meta->len());
+    }
     return RC::SUCCESS;
   }
 
@@ -244,11 +260,12 @@ public:
   Record &record() { return *record_; }
 
   const Record &record() const { return *record_; }
-
+  
 private:
   Record                  *record_ = nullptr;
   const Table             *table_  = nullptr;
   std::vector<FieldExpr *> speces_;
+  common::Bitmap           *bitmap_;
 };
 
 /**

@@ -52,10 +52,17 @@ RC UpdateStmt::create(Db *db, const UpdateSqlNode &update, Stmt *&stmt)
     return RC::SCHEMA_FIELD_NOT_EXIST;
   }
 
-  if (field_meta->type() != update.value.attr_type()) {
-    LOG_WARN("field %s type %d not match value type %d",
+  if (update.value.is_null()) {
+    if (!field_meta->allow_null()) {
+      LOG_WARN("field %s not allow null", update.attribute_name.c_str());
+      return RC::SCHEMA_FIELD_TYPE_MISMATCH;
+    }
+  } else {
+    if (field_meta->type() != update.value.attr_type()) {
+      LOG_WARN("field %s type %d not match value type %d",
         update.attribute_name.c_str(), field_meta->type(), update.value.attr_type());
-    return RC::SCHEMA_FIELD_TYPE_MISMATCH;
+      return RC::SCHEMA_FIELD_TYPE_MISMATCH;
+    }
   }
 
   std::unordered_map<std::string, Table *> table_map;
