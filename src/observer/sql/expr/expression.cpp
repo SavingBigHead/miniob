@@ -14,21 +14,14 @@ See the Mulan PSL v2 for more details. */
 #include <regex>
 #include "sql/expr/expression.h"
 #include "common/type/attr_type.h"
-#include "common/type/vector_type.h"
 #include "sql/expr/tuple.h"
 #include "sql/expr/arithmetic_operator.hpp"
 #include "sql/expr/expression.h"
-#include "common/lang/defer.h"
 #include "sql/expr/tuple.h"
 #include <regex>
 #include <string>
-#include "common/lang/string.h"
-#include <iomanip>
 #include "sql/stmt/select_stmt.h"
-#include "sql/operator/logical_operator.h"
 #include "sql/operator/physical_operator.h"
-#include "sql/optimizer/logical_plan_generator.h"
-#include "sql/optimizer/physical_plan_generator.h"
 #include <limits>
 
 using namespace std;
@@ -127,7 +120,6 @@ RC CastExpr::try_get_value(Value &result) const
 
 ////////////////////////////////////////////////////////////////////////////////
 
-
 static void replace_all(std::string &str, const std::string &from, const std::string &to)
 {
   if (from.empty()) {
@@ -145,7 +137,7 @@ static bool str_like(const Value &left, const Value &right)
   replace_all(raw_reg, "_", "[^']");
   replace_all(raw_reg, "%", "[^']*");
   std::regex reg(raw_reg.c_str(), std::regex_constants::ECMAScript | std::regex_constants::icase);
-  bool res = std::regex_match(left.data(), reg);
+  bool       res = std::regex_match(left.data(), reg);
   return res;
 }
 
@@ -157,26 +149,16 @@ ComparisonExpr::~ComparisonExpr() {}
 
 RC ComparisonExpr::compare_value(const Value &left, const Value &right, bool &result) const
 {
-  RC  rc         = RC::SUCCESS;
+  RC rc = RC::SUCCESS;
 
-  if (comp_ == LIKE_OP|| comp_ == NOT_LIKE_OP ) {
+  if (left.is_null() || right.is_null()) {
+    result = false;
+    return rc;
+  }
+
+  if (comp_ == LIKE_OP || comp_ == NOT_LIKE_OP) {
     ASSERT(left.attr_type() == AttrType::CHARS || right.attr_type() == AttrType::CHARS, "[NOT_]LIKE_OP lhs or rhs NOT STRING!");
     result = comp_ == LIKE_OP ? str_like(left, right) : !str_like(left, right);
-    return rc;
-  }
-
-  if (left.attr_type() == AttrType::INTS && left.get_int() == std::numeric_limits<int>::max()) {
-    result = false;
-    return rc;
-  } else if (left.attr_type() == AttrType::FLOATS && left.get_float() == std::numeric_limits<float>::max()) {
-    result = false;
-    return rc;
-  }
-  if (right.attr_type() == AttrType::INTS && right.get_int() == std::numeric_limits<int>::max()) {
-    result = false;
-    return rc;
-  } else if (right.attr_type() == AttrType::FLOATS && right.get_float() == std::numeric_limits<float>::max()) {
-    result = false;
     return rc;
   }
 
@@ -382,20 +364,8 @@ RC ArithmeticExpr::calc_value(const Value &left_value, const Value &right_value,
 {
   RC rc = RC::SUCCESS;
 
-  if (left_value.attr_type() == AttrType::INTS && left_value.get_int() == std::numeric_limits<int>::max()) {
-    value.set_int(std::numeric_limits<int>::max());
-    return rc;
-  } else if (left_value.attr_type() == AttrType::FLOATS &&
-             left_value.get_float() == std::numeric_limits<float>::max()) {
-    value.set_float(std::numeric_limits<float>::max());
-    return rc;
-  }
-  if (right_value.attr_type() == AttrType::INTS && right_value.get_int() == std::numeric_limits<int>::max()) {
-    value.set_int(std::numeric_limits<int>::max());
-    return rc;
-  } else if (right_value.attr_type() == AttrType::FLOATS &&
-             right_value.get_float() == std::numeric_limits<float>::max()) {
-    value.set_float(std::numeric_limits<float>::max());
+  if (left_value.is_null() || right_value.is_null()) {
+    value.set_null();
     return rc;
   }
 
