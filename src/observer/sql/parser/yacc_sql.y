@@ -135,6 +135,7 @@ DistanceExpr *create_distance_expression(DistanceExpr::Type type,
         NE
         IS
         LIKE
+        IN
         NOT
 
 /** union 中定义各种数据类型，真实生成的代码也是union类型，所以不能有非POD类型的数据 **/
@@ -181,6 +182,7 @@ DistanceExpr *create_distance_expression(DistanceExpr::Type type,
 %type <string>              storage_format
 %type <relation_list>       rel_list
 %type <expression>          expression
+%type <expression>          sub_query_expr
 %type <expression_list>     expression_list
 %type <expression_list>     group_by
 %type <sql_node>            calc_stmt
@@ -614,6 +616,9 @@ expression:
     | INNER_PRODUCT LBRACE expression COMMA expression RBRACE {
       $$ = create_distance_expression(DistanceExpr::Type::INNER_PRODUCT, $3, $5, sql_string, &@$);
     }
+    | sub_query_expr {
+      $$ = $1;
+    }
     | value {
       $$ = new ValueExpr(*$1);
       $$->set_name(token_name(sql_string, &@$));
@@ -629,6 +634,13 @@ expression:
       $$ = new StarExpr();
     }
     // your code here
+    ;
+
+sub_query_expr:
+    LBRACE select_stmt RBRACE {
+      $$ = new SubQueryExpr(std::move($2->selection));
+      delete $2;
+    }
     ;
 
 rel_attr:
@@ -715,6 +727,8 @@ comp_op:
     | NOT LIKE {$$ = NOT_LIKE_OP;}
     | IS { $$ = IS_OP;}
     | IS NOT { $$ = IS_NOT_OP;}
+    | IN { $$ = IN_OP;}
+    | NOT IN { $$ = NOT_IN_OP;}
     ;
 
 // your code here

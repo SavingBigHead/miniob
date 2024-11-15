@@ -16,8 +16,11 @@ See the Mulan PSL v2 for more details. */
 
 #include <memory>
 #include <string>
+#include <vector>
 
+#include "common/type/attr_type.h"
 #include "common/value.h"
+#include "sql/parser/parse_defs.h"
 #include "storage/field/field.h"
 #include "sql/expr/aggregator.h"
 #include "storage/common/chunk.h"
@@ -48,6 +51,7 @@ enum class ExprType
   ARITHMETIC,   ///< 算术运算
   AGGREGATION,  ///< 聚合运算
   DISTANCE,     ///< 距离计算
+  SubQuery,     ///< 子查询
 };
 
 /**
@@ -500,4 +504,30 @@ private:
   std::unique_ptr<Expression> left_;
   std::unique_ptr<Expression> right_;
   Type distance_type_;
+};
+
+class SessionEvent;
+class SQLStageEvent;
+class SqlResult;
+class SubQueryExpr : public Expression
+{
+public:
+  SubQueryExpr(SelectSqlNode &&sql_node);
+  virtual ~SubQueryExpr() = default;
+
+  void init();
+
+  ExprType type() const override { return ExprType::SubQuery; }
+  RC sub_handle_sql(SQLStageEvent *sql_event);
+  RC store_sql_results(SqlResult *sql_result, std::vector<Value> &results);
+
+  RC get_value(const Tuple &tuple, Value &value) const override;
+  std::vector<Value> &results() { return results_; }
+  AttrType value_type() const override { return AttrType::UNDEFINED; }
+
+private:
+  SessionEvent *session_event_;
+  //ParsedSqlNode *parsed_sql_node_;
+  std::unique_ptr<ParsedSqlNode> parsed_sql_node_;
+  std::vector<Value> results_;
 };

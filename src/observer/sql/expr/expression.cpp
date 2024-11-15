@@ -11,19 +11,28 @@ See the Mulan PSL v2 for more details. */
 //
 // Created by Wangyunlai on 2022/07/05.
 //
+#include <memory>
 #include <regex>
 #include "sql/expr/expression.h"
+#include "common/rc.h"
 #include "common/type/attr_type.h"
+#include "event/sql_event.h"
+#include "session/session.h"
+#include "sql/executor/execute_stage.h"
+#include "sql/executor/sql_result.h"
 #include "sql/expr/tuple.h"
 #include "sql/expr/arithmetic_operator.hpp"
 #include "sql/expr/expression.h"
 #include "sql/expr/tuple.h"
 #include <regex>
 #include <string>
+#include "sql/optimizer/optimize_stage.h"
 #include "sql/parser/parse_defs.h"
+#include "sql/parser/resolve_stage.h"
 #include "sql/stmt/select_stmt.h"
 #include "sql/operator/physical_operator.h"
-#include <limits>
+#include "event/session_event.h"
+#include "net/cli_communicator.h"
 
 using namespace std;
 
@@ -169,6 +178,28 @@ RC ComparisonExpr::compare_value(const Value &left, const Value &right, bool &re
     ASSERT(left.attr_type() == AttrType::CHARS || right.attr_type() == AttrType::CHARS, "[NOT_]LIKE_OP lhs or rhs NOT STRING!");
     result = comp_ == LIKE_OP ? str_like(left, right) : !str_like(left, right);
     return rc;
+  } else if (comp_ == IN_OP) {
+    SubQueryExpr      *subquery_expr = dynamic_cast<SubQueryExpr *>(right_.get());
+    std::vector<Value> values        = subquery_expr->results();
+    for (const Value &v : values) {
+      if (left.compare(v) == 0) {
+        result = true;
+        return rc;
+      }
+    }
+    result = false;
+    return rc;
+  } else if (comp_ == NOT_IN_OP) {
+    SubQueryExpr      *subquery_expr = dynamic_cast<SubQueryExpr *>(right_.get());
+    std::vector<Value> values        = subquery_expr->results();
+    for (const Value &v : values) {
+      if (left.compare(v) == 0) {
+        result = false;
+        return rc;
+      }
+    }
+    result = true;
+    return rc;
   }
 
   int cmp_result = left.compare(right);
@@ -226,12 +257,14 @@ RC ComparisonExpr::get_value(const Tuple &tuple, Value &value) const
 {
   Value left_value;
   Value right_value;
+  RC    rc = RC::SUCCESS;
 
-  RC rc = left_->get_value(tuple, left_value);
+  rc = left_->get_value(tuple, left_value);
   if (rc != RC::SUCCESS) {
     LOG_WARN("failed to get value of left expression. rc=%s", strrc(rc));
     return rc;
   }
+
   rc = right_->get_value(tuple, right_value);
   if (rc != RC::SUCCESS) {
     LOG_WARN("failed to get value of right expression. rc=%s", strrc(rc));
@@ -709,4 +742,89 @@ RC DistanceExpr::get_value(const Tuple &tuple, Value &value) const
     }
     return get_distance(left_value, right_value, value);
   }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+SubQueryExpr::SubQueryExpr(SelectSqlNode &&sql_node)  {
+  ParsedSqlNode *parsed_sql_node = new ParsedSqlNode(SqlCommandFlag::SCF_SELECT);
+  parsed_sql_node->selection = std::move(sql_node);
+  parsed_sql_node_ = unique_ptr<ParsedSqlNode>(parsed_sql_node);
+}
+
+void SubQueryExpr::init()
+{
+  CliCommunicator communicator;
+  communicator.init(STDIN_FILENO, make_unique<Session>(Session::default_session()), "stdin");
+
+  session_event_ = new SessionEvent(&communicator);
+
+  Session::set_current_session(session_event_->session());
+  session_event_->session()->set_current_request(session_event_);
+
+  SQLStageEvent *sql_stage_event = new SQLStageEvent(session_event_, "subquery");
+  //parsed_sql_node_->set_flag(SqlCommandFlag::SCF_SELECT);
+  sql_stage_event->set_sql_node(std::move(parsed_sql_node_));
+
+  sub_handle_sql(sql_stage_event);
+
+  store_sql_results(session_event_->sql_result(), results_);
+}
+
+RC SubQueryExpr::sub_handle_sql(SQLStageEvent *sql_event)
+{
+  ResolveStage  resolve_stage;
+  OptimizeStage optimize_stage;
+  ExecuteStage  execute_stage;
+
+  RC rc = resolve_stage.handle_request(sql_event);
+  if (OB_FAIL(rc)) {
+    LOG_TRACE("failed to do resolve. rc=%s", strrc(rc));
+    return rc;
+  }
+
+  rc = optimize_stage.handle_request(sql_event);
+  if (rc != RC::UNIMPLEMENTED && rc != RC::SUCCESS) {
+    LOG_TRACE("failed to do optimize. rc=%s", strrc(rc));
+    return rc;
+  }
+
+  rc = execute_stage.handle_request(sql_event);
+  if (OB_FAIL(rc)) {
+    LOG_TRACE("failed to do execute. rc=%s", strrc(rc));
+    return rc;
+  }
+  return rc;
+}
+
+RC SubQueryExpr::store_sql_results(SqlResult *sql_result, std::vector<Value> &results)
+{
+  RC     rc    = RC::SUCCESS;
+  Tuple *tuple = nullptr;
+
+  while (RC::SUCCESS == (rc = sql_result->next_tuple(tuple))) {
+    for (int i = 0; i < tuple->cell_num(); i++) {
+      Value value;
+      rc = tuple->cell_at(i, value);
+      if (rc != RC::SUCCESS) {
+        LOG_WARN("failed to get cell value. rc=%s", strrc(rc));
+        return rc;
+      }
+      results.push_back(value);
+    }
+  }
+
+  if (rc == RC::RECORD_EOF) {
+    rc = RC::SUCCESS;
+  } else if (OB_FAIL(rc)) {
+    LOG_WARN("failed to get next tuple. rc=%s", strrc(rc));
+  }
+  return rc;
+}
+
+RC SubQueryExpr::get_value(const Tuple &tuple, Value &value) const
+{
+  RC rc = RC::SUCCESS;
+  value = results_[0];
+  return rc;
 }

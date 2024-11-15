@@ -14,6 +14,7 @@ See the Mulan PSL v2 for more details. */
 
 #include "session_event.h"
 #include "net/communicator.h"
+#include "sql/executor/sql_result.h"
 
 SessionEvent::SessionEvent(Communicator *comm) : communicator_(comm), sql_result_(communicator_->session()) {}
 

@@ -99,6 +99,7 @@ FROM                                    RETURN_TOKEN(FROM);
 WHERE                                   RETURN_TOKEN(WHERE);
 NOT                                     RETURN_TOKEN(NOT);
 LIKE                                    RETURN_TOKEN(LIKE); /* 识别 LIKE 关键字 */
+IN                                      RETURN_TOKEN(IN);
 IS                                      RETURN_TOKEN(IS);
 AND                                     RETURN_TOKEN(AND);
 INSERT                                  RETURN_TOKEN(INSERT);

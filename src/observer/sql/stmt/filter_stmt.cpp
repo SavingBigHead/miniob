@@ -152,6 +152,11 @@ RC resolve_unbound_field_expr(std::unique_ptr<Expression> &expr, Table *default_
     }
   }
 
+  if (expr->type() == ExprType::SubQuery) {
+    SubQueryExpr *subquery_expr = static_cast<SubQueryExpr *>(expr.get());
+    subquery_expr->init();
+  }
+
   // 如果当前表达式是 UnboundFieldExpr，则进行解析并替换为 FieldExpr
   if (expr->type() == ExprType::UNBOUND_FIELD) {
     UnboundFieldExpr *unbound_field_expr = static_cast<UnboundFieldExpr *>(expr.get());
